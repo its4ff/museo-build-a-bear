@@ -1,0 +1,26 @@
+.DS_Store
+xcuserdata/
+DerivedData/
+*.xcuserstate
+/build/
+.swiftpm/
+.build/
+*.ipa
+*.dSYM
+*.dSYM.zip
+*.log
+
+# your identity and keys stay on your machine
+Config/Local.xcconfig
+.env
+.env.*
+
+# coding agents' per-machine settings
+.claude/settings.local.json
+
+# museo build tooling
+.build.lock
+lab-shots/
+
+# your own museo kit checkout (scripts/local-kit.sh)
+museo build local.xcworkspace/

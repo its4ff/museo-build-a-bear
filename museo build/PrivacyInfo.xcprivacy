@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<!--
+  museo build's privacy manifest (the app's own code plus the MuseoKit package, which has none of its own).
+  Muses stay on this iphone: audio, transcripts, titles, notes and settings live in the app's container.
+  desert-ant-core's own manifest (merged by Xcode) declares what it sends for licence metering: an anonymous
+  install id, product interaction counts and diagnostics, unlinked, no tracking. Never audio or words.
+  Packages that ship their own manifest (desert-ant-core, iOSMcuManagerLibrary, ZIPFoundation) are merged by Xcode.
+
+  If you add an API from Apple's required reason list (file timestamps outside the container,
+  boot time, disk space, active keyboards), declare it here:
+  https://developer.apple.com/documentation/bundleresources/privacy_manifest_files/describing_use_of_required_reason_api
+  If your code sends muses somewhere (App/YourCode.swift), add what it collects to NSPrivacyCollectedDataTypes.
+-->
+<plist version="1.0">
+<dict>
+	<key>NSPrivacyTracking</key>
+	<false/>
+	<key>NSPrivacyTrackingDomains</key>
+	<array/>
+	<key>NSPrivacyCollectedDataTypes</key>
+	<array/>
+	<key>NSPrivacyAccessedAPITypes</key>
+	<array>
+		<!-- settings, the sort and onboarding flags, and the ring kit's paired ring + sync state -->
+		<dict>
+			<key>NSPrivacyAccessedAPIType</key>
+			<string>NSPrivacyAccessedAPICategoryUserDefaults</string>
+			<key>NSPrivacyAccessedAPITypeReasons</key>
+			<array>
+				<string>CA92.1</string>
+			</array>
+		</dict>
+		<!-- modification dates of the app's own audio and timing files, to key caches -->
+		<dict>
+			<key>NSPrivacyAccessedAPIType</key>
+			<string>NSPrivacyAccessedAPICategoryFileTimestamp</string>
+			<key>NSPrivacyAccessedAPITypeReasons</key>
+			<array>
+				<string>C617.1</string>
+			</array>
+		</dict>
+	</array>
+</dict>
+</plist>

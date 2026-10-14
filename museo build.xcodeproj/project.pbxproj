@@ -1,0 +1,614 @@
+// !$*UTF8*$!
+{
+	archiveVersion = 1;
+	classes = {
+	};
+	objectVersion = 77;
+	objects = {
+
+/* Begin PBXBuildFile section */
+		9CF60404903F558B0095ABA8 /* WidgetKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 9CF60402903F558B0095ABA8 /* WidgetKit.framework */; };
+		9CF60405903F558B0095ABA8 /* SwiftUI.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 9CF60403903F558B0095ABA8 /* SwiftUI.framework */; };
+		9CF60406903F558B0095ABA8 /* museo build widgetExtension.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = 9CF60401903F558B0095ABA8 /* museo build widgetExtension.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
+		9CF608A3303F558B0095ABA8 /* Clear in Frameworks */ = {isa = PBXBuildFile; productRef = 9CF608A2303F558B0095ABA8 /* Clear */; };
+		9CF608A9303F558B0095ABA8 /* Voz in Frameworks */ = {isa = PBXBuildFile; productRef = 9CF608A8303F558B0095ABA8 /* Voz */; };
+		9CF608AB303F558B0095ABA8 /* DesertAnt in Frameworks */ = {isa = PBXBuildFile; productRef = 9CF608AA303F558B0095ABA8 /* DesertAnt */; };
+		9CF609A3303F558B0095ABA8 /* MuseoKit in Frameworks */ = {isa = PBXBuildFile; productRef = 9CF609A2303F558B0095ABA8 /* MuseoKit */; };
+/* End PBXBuildFile section */
+
+/* Begin PBXContainerItemProxy section */
+		9CF60407903F558B0095ABA8 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 9CF603C7303F558B0095ABA8 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 9CF6040F903F558B0095ABA8;
+			remoteInfo = "museo build widgetExtension";
+		};
+/* End PBXContainerItemProxy section */
+
+/* Begin PBXCopyFilesBuildPhase section */
+		9CF60408903F558B0095ABA8 /* Embed Foundation Extensions */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = "";
+			dstSubfolderSpec = 13;
+			files = (
+				9CF60406903F558B0095ABA8 /* museo build widgetExtension.appex in Embed Foundation Extensions */,
+			);
+			name = "Embed Foundation Extensions";
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXCopyFilesBuildPhase section */
+
+/* Begin PBXFileReference section */
+		9CF603CF303F558B0095ABA8 /* museo build.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "museo build.app"; sourceTree = BUILT_PRODUCTS_DIR; };
+		9CF60401903F558B0095ABA8 /* museo build widgetExtension.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = "museo build widgetExtension.appex"; sourceTree = BUILT_PRODUCTS_DIR; };
+		9CF60402903F558B0095ABA8 /* WidgetKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = WidgetKit.framework; path = System/Library/Frameworks/WidgetKit.framework; sourceTree = SDKROOT; };
+		9CF60403903F558B0095ABA8 /* SwiftUI.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = SwiftUI.framework; path = System/Library/Frameworks/SwiftUI.framework; sourceTree = SDKROOT; };
+		9CF6C001303F558B0095ABA8 /* Builder.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; path = Builder.xcconfig; sourceTree = "<group>"; };
+		9CF6C002303F558B0095ABA8 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
+/* End PBXFileReference section */
+
+/* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
+		9CF6040B903F558B0095ABA8 /* Exceptions for "museo build widget" folder in "museo build widgetExtension" target */ = {
+			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (
+				Info.plist,
+			);
+			target = 9CF6040F903F558B0095ABA8 /* museo build widgetExtension */;
+		};
+/* End PBXFileSystemSynchronizedBuildFileExceptionSet section */
+
+/* Begin PBXFileSystemSynchronizedRootGroup section */
+		9CF603D1303F558B0095ABA8 /* museo build */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			path = "museo build";
+			sourceTree = "<group>";
+		};
+		9CF60409903F558B0095ABA8 /* museo build widget */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			exceptions = (
+				9CF6040B903F558B0095ABA8 /* Exceptions for "museo build widget" folder in "museo build widgetExtension" target */,
+			);
+			path = "museo build widget";
+			sourceTree = "<group>";
+		};
+		9CF6040A903F558B0095ABA8 /* Shared */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			path = Shared;
+			sourceTree = "<group>";
+		};
+/* End PBXFileSystemSynchronizedRootGroup section */
+
+/* Begin PBXFrameworksBuildPhase section */
+		9CF603CC303F558B0095ABA8 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				9CF609A3303F558B0095ABA8 /* MuseoKit in Frameworks */,
+				9CF608A3303F558B0095ABA8 /* Clear in Frameworks */,
+				9CF608A9303F558B0095ABA8 /* Voz in Frameworks */,
+				9CF608AB303F558B0095ABA8 /* DesertAnt in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		9CF6040C903F558B0095ABA8 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				9CF60405903F558B0095ABA8 /* SwiftUI.framework in Frameworks */,
+				9CF60404903F558B0095ABA8 /* WidgetKit.framework in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXFrameworksBuildPhase section */
+
+/* Begin PBXGroup section */
+		9CF603C6303F558B0095ABA8 = {
+			isa = PBXGroup;
+			children = (
+				9CF6C000303F558B0095ABA8 /* Config */,
+				9CF603D1303F558B0095ABA8 /* museo build */,
+				9CF6040A903F558B0095ABA8 /* Shared */,
+				9CF60409903F558B0095ABA8 /* museo build widget */,
+				9CF60414903F558B0095ABA8 /* Frameworks */,
+				9CF603D0303F558B0095ABA8 /* Products */,
+			);
+			sourceTree = "<group>";
+		};
+		9CF603D0303F558B0095ABA8 /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				9CF603CF303F558B0095ABA8 /* museo build.app */,
+				9CF60401903F558B0095ABA8 /* museo build widgetExtension.appex */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		9CF60414903F558B0095ABA8 /* Frameworks */ = {
+			isa = PBXGroup;
+			children = (
+				9CF60402903F558B0095ABA8 /* WidgetKit.framework */,
+				9CF60403903F558B0095ABA8 /* SwiftUI.framework */,
+			);
+			name = Frameworks;
+			sourceTree = "<group>";
+		};
+		9CF6C000303F558B0095ABA8 /* Config */ = {
+			isa = PBXGroup;
+			children = (
+				9CF6C001303F558B0095ABA8 /* Builder.xcconfig */,
+				9CF6C002303F558B0095ABA8 /* Info.plist */,
+			);
+			path = Config;
+			sourceTree = "<group>";
+		};
+/* End PBXGroup section */
+
+/* Begin PBXNativeTarget section */
+		9CF603CE303F558B0095ABA8 /* museo build */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 9CF603DC303F558C0095ABA8 /* Build configuration list for PBXNativeTarget "museo build" */;
+			buildPhases = (
+				9CF603CB303F558B0095ABA8 /* Sources */,
+				9CF603CC303F558B0095ABA8 /* Frameworks */,
+				9CF603CD303F558B0095ABA8 /* Resources */,
+				9CF60408903F558B0095ABA8 /* Embed Foundation Extensions */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				9CF60413903F558B0095ABA8 /* PBXTargetDependency */,
+			);
+			fileSystemSynchronizedGroups = (
+				9CF603D1303F558B0095ABA8 /* museo build */,
+				9CF6040A903F558B0095ABA8 /* Shared */,
+			);
+			name = "museo build";
+			packageProductDependencies = (
+				9CF608A2303F558B0095ABA8 /* Clear */,
+				9CF608A8303F558B0095ABA8 /* Voz */,
+				9CF608AA303F558B0095ABA8 /* DesertAnt */,
+				9CF609A2303F558B0095ABA8 /* MuseoKit */,
+			);
+			productName = "museo build";
+			productReference = 9CF603CF303F558B0095ABA8 /* museo build.app */;
+			productType = "com.apple.product-type.application";
+		};
+		9CF6040F903F558B0095ABA8 /* museo build widgetExtension */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 9CF60412903F558B0095ABA8 /* Build configuration list for PBXNativeTarget "museo build widgetExtension" */;
+			buildPhases = (
+				9CF6040D903F558B0095ABA8 /* Sources */,
+				9CF6040C903F558B0095ABA8 /* Frameworks */,
+				9CF6040E903F558B0095ABA8 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			fileSystemSynchronizedGroups = (
+				9CF60409903F558B0095ABA8 /* museo build widget */,
+				9CF6040A903F558B0095ABA8 /* Shared */,
+			);
+			name = "museo build widgetExtension";
+			packageProductDependencies = (
+			);
+			productName = "museo build widgetExtension";
+			productReference = 9CF60401903F558B0095ABA8 /* museo build widgetExtension.appex */;
+			productType = "com.apple.product-type.app-extension";
+		};
+/* End PBXNativeTarget section */
+
+/* Begin PBXProject section */
+		9CF603C7303F558B0095ABA8 /* Project object */ = {
+			isa = PBXProject;
+			attributes = {
+				BuildIndependentTargetsInParallel = 1;
+				LastSwiftUpdateCheck = 2660;
+				LastUpgradeCheck = 2660;
+				TargetAttributes = {
+					9CF603CE303F558B0095ABA8 = {
+						CreatedOnToolsVersion = 26.6;
+					};
+					9CF6040F903F558B0095ABA8 = {
+						CreatedOnToolsVersion = 26.6;
+					};
+				};
+			};
+			buildConfigurationList = 9CF603CA303F558B0095ABA8 /* Build configuration list for PBXProject "museo build" */;
+			developmentRegion = en;
+			hasScannedForEncodings = 0;
+			knownRegions = (
+				en,
+				Base,
+			);
+			mainGroup = 9CF603C6303F558B0095ABA8;
+			minimizedProjectReferenceProxies = 1;
+			packageReferences = (
+				9CF608A1303F558B0095ABA8 /* XCRemoteSwiftPackageReference "desert-ant-core" */,
+				9CF609A1303F558B0095ABA8 /* XCRemoteSwiftPackageReference "museo-kit" */,
+			);
+			preferredProjectObjectVersion = 77;
+			productRefGroup = 9CF603D0303F558B0095ABA8 /* Products */;
+			projectDirPath = "";
+			projectRoot = "";
+			targets = (
+				9CF603CE303F558B0095ABA8 /* museo build */,
+				9CF6040F903F558B0095ABA8 /* museo build widgetExtension */,
+			);
+		};
+/* End PBXProject section */
+
+/* Begin PBXResourcesBuildPhase section */
+		9CF603CD303F558B0095ABA8 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		9CF6040E903F558B0095ABA8 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXResourcesBuildPhase section */
+
+/* Begin PBXSourcesBuildPhase section */
+		9CF603CB303F558B0095ABA8 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		9CF6040D903F558B0095ABA8 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXSourcesBuildPhase section */
+
+/* Begin PBXTargetDependency section */
+		9CF60413903F558B0095ABA8 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 9CF6040F903F558B0095ABA8 /* museo build widgetExtension */;
+			targetProxy = 9CF60407903F558B0095ABA8 /* PBXContainerItemProxy */;
+		};
+/* End PBXTargetDependency section */
+
+/* Begin XCBuildConfiguration section */
+		9CF603DA303F558C0095ABA8 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			baseConfigurationReference = 9CF6C001303F558B0095ABA8 /* Builder.xcconfig */;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++20";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = dwarf;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_TESTABILITY = YES;
+				ENABLE_USER_SCRIPT_SANDBOXING = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu17;
+				GCC_DYNAMIC_NO_PIC = NO;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"DEBUG=1",
+					"$(inherited)",
+				);
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 26.5;
+				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
+				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
+				MTL_FAST_MATH = YES;
+				ONLY_ACTIVE_ARCH = YES;
+				SDKROOT = iphoneos;
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = "DEBUG $(inherited)";
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
+			};
+			name = Debug;
+		};
+		9CF603DB303F558C0095ABA8 /* Release */ = {
+			isa = XCBuildConfiguration;
+			baseConfigurationReference = 9CF6C001303F558B0095ABA8 /* Builder.xcconfig */;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++20";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				ENABLE_NS_ASSERTIONS = NO;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_USER_SCRIPT_SANDBOXING = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu17;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 26.5;
+				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
+				MTL_ENABLE_DEBUG_INFO = NO;
+				MTL_FAST_MATH = YES;
+				SDKROOT = iphoneos;
+				SWIFT_COMPILATION_MODE = wholemodule;
+				VALIDATE_PRODUCT = YES;
+			};
+			name = Release;
+		};
+		9CF603DD303F558C0095ABA8 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				ENABLE_PREVIEWS = YES;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = Config/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = "$(MUSEO_APP_NAME)";
+				INFOPLIST_KEY_ITSAppUsesNonExemptEncryption = NO;
+				INFOPLIST_KEY_NSBluetoothAlwaysUsageDescription = "museo links to your ring over bluetooth to bring in what you say.";
+				INFOPLIST_KEY_NSBluetoothPeripheralUsageDescription = "museo links to your ring over bluetooth to bring in what you say.";
+				INFOPLIST_KEY_NSSpeechRecognitionUsageDescription = "museo transcribes your muses on this iphone. your voice never leaves it to be transcribed.";
+				INFOPLIST_KEY_NSSupportsLiveActivities = YES;
+				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
+				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
+				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
+				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = "UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+				INFOPLIST_KEY_UIUserInterfaceStyle = Light;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = "$(MUSEO_BUNDLE_ID)";
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				STRING_CATALOG_GENERATE_SYMBOLS = YES;
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_DEFAULT_ACTOR_ISOLATION = MainActor;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Debug;
+		};
+		9CF603DE303F558C0095ABA8 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				ENABLE_PREVIEWS = YES;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = Config/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = "$(MUSEO_APP_NAME)";
+				INFOPLIST_KEY_ITSAppUsesNonExemptEncryption = NO;
+				INFOPLIST_KEY_NSBluetoothAlwaysUsageDescription = "museo links to your ring over bluetooth to bring in what you say.";
+				INFOPLIST_KEY_NSBluetoothPeripheralUsageDescription = "museo links to your ring over bluetooth to bring in what you say.";
+				INFOPLIST_KEY_NSSpeechRecognitionUsageDescription = "museo transcribes your muses on this iphone. your voice never leaves it to be transcribed.";
+				INFOPLIST_KEY_NSSupportsLiveActivities = YES;
+				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
+				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
+				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
+				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = "UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+				INFOPLIST_KEY_UIUserInterfaceStyle = Light;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = "$(MUSEO_BUNDLE_ID)";
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				STRING_CATALOG_GENERATE_SYMBOLS = YES;
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_DEFAULT_ACTOR_ISOLATION = MainActor;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Release;
+		};
+		9CF60410903F558B0095ABA8 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = "museo build widget/Info.plist";
+				INFOPLIST_KEY_CFBundleDisplayName = "$(MUSEO_APP_NAME)";
+				INFOPLIST_KEY_NSSupportsLiveActivities = YES;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = "$(MUSEO_BUNDLE_ID).widget";
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SKIP_INSTALL = YES;
+				STRING_CATALOG_GENERATE_SYMBOLS = YES;
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Debug;
+		};
+		9CF60411903F558B0095ABA8 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = "museo build widget/Info.plist";
+				INFOPLIST_KEY_CFBundleDisplayName = "$(MUSEO_APP_NAME)";
+				INFOPLIST_KEY_NSSupportsLiveActivities = YES;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = "$(MUSEO_BUNDLE_ID).widget";
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SKIP_INSTALL = YES;
+				STRING_CATALOG_GENERATE_SYMBOLS = YES;
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Release;
+		};
+/* End XCBuildConfiguration section */
+
+/* Begin XCConfigurationList section */
+		9CF603CA303F558B0095ABA8 /* Build configuration list for PBXProject "museo build" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				9CF603DA303F558C0095ABA8 /* Debug */,
+				9CF603DB303F558C0095ABA8 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		9CF603DC303F558C0095ABA8 /* Build configuration list for PBXNativeTarget "museo build" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				9CF603DD303F558C0095ABA8 /* Debug */,
+				9CF603DE303F558C0095ABA8 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		9CF60412903F558B0095ABA8 /* Build configuration list for PBXNativeTarget "museo build widgetExtension" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				9CF60410903F558B0095ABA8 /* Debug */,
+				9CF60411903F558B0095ABA8 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+/* End XCConfigurationList section */
+
+/* Begin XCRemoteSwiftPackageReference section */
+		9CF609A1303F558B0095ABA8 /* XCRemoteSwiftPackageReference "museo-kit" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/its4ff/museo-kit.git";
+			requirement = {
+				kind = exactVersion;
+				version = 0.1.0;
+			};
+		};
+		9CF608A1303F558B0095ABA8 /* XCRemoteSwiftPackageReference "desert-ant-core" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/Desert-Ant-Labs/desert-ant-core.git";
+			requirement = {
+				kind = exactVersion;
+				version = 3.5.0;
+			};
+		};
+/* End XCRemoteSwiftPackageReference section */
+
+/* Begin XCSwiftPackageProductDependency section */
+		9CF608A2303F558B0095ABA8 /* Clear */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 9CF608A1303F558B0095ABA8 /* XCRemoteSwiftPackageReference "desert-ant-core" */;
+			productName = Clear;
+		};
+		9CF608A8303F558B0095ABA8 /* Voz */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 9CF608A1303F558B0095ABA8 /* XCRemoteSwiftPackageReference "desert-ant-core" */;
+			productName = Voz;
+		};
+		9CF608AA303F558B0095ABA8 /* DesertAnt */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 9CF608A1303F558B0095ABA8 /* XCRemoteSwiftPackageReference "desert-ant-core" */;
+			productName = DesertAnt;
+		};
+		9CF609A2303F558B0095ABA8 /* MuseoKit */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 9CF609A1303F558B0095ABA8 /* XCRemoteSwiftPackageReference "museo-kit" */;
+			productName = MuseoKit;
+		};
+/* End XCSwiftPackageProductDependency section */
+	};
+	rootObject = 9CF603C7303F558B0095ABA8 /* Project object */;
+}

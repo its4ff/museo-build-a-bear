@@ -1,0 +1,36 @@
+---
+description: The museo ring is the sealed MuseoKit package. Apps use Museo, RingModel, RingActions, MusePipeline and MuseHooks, never bluetooth.
+alwaysApply: true
+---
+
+# the ring is sealed
+
+The ring lives in the `MuseoKit` Swift package (GitHub `its4ff/museo-kit`, pinned to an exact version; `scripts/local-kit.sh` swaps in a local `../museo-kit` for kit work). Never copy its files into this repo, edit it from here, or wrap or replace `RingBLEManager`. This repo has no CoreBluetooth, GATT, Treaty frames, raw BLE or second bluetooth stack.
+
+```swift
+// BAD: a second bluetooth stack, raw protocol, or anything copied out of the kit
+let central = CBCentralManager(delegate: self, queue: nil)
+peripheral.writeValue(frame, for: tx, type: .withoutResponse)
+
+// GOOD: read the ring's status in a view, react to muses and ring events in your code
+struct RingLine: View {
+    @Environment(RingModel.self) private var ring
+    var body: some View {
+        Text(ring.status.shortLine)              // "ring linked", "listening…", "bringing in 3"
+            .font(MuseType.body)
+            .foregroundStyle(MuseColor.ink70)
+    }
+}
+// App/YourCode.swift
+MuseHooks.onTranscribed { muse in print("[muse][yours]", muse.words) }
+Museo.onEvent { event in if case .liveStarted = event { MuseHaptics.play(.soft) } }
+```
+
+- `Museo.start(name:clearsRingAfterSync:)` runs once, in `App/AppStart.swift`, from the app delegate. Never in a view.
+- Finished recordings come through `Museo.onCapture`, and only `MusePipeline` uses it. It saves the muse and flushes to disk before returning true; only then does the kit let the ring retire its copy. Keep that order.
+- Ring events: `Museo.onEvent { }` or `Museo.events()`, any number of listeners. Never set the manager's `on…` callbacks.
+- Views read `RingModel.status` (`RingStatus`). Ring buttons go through `RingActions`. Firmware through `Museo.firmware`. `Museo.manager` is for low-level tools like the ring console, never screens.
+- Only a confirmed tap may clear the ring. One ring app per phone. Recording is always 24 kbps, with no setting.
+- If a task needs the ring's protocol, it's a kit change: say so and stop.
+
+Build in `App/YourCode.swift`, `Screens/` and `Design/`. AGENTS.md has the map. Ring screens: the `museo-ring` skill.
