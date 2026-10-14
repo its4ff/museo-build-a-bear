@@ -10,8 +10,8 @@
 
 <p align="center">
   <img src="https://img.shields.io/badge/status-preview-8250df" alt="status: preview">
-  <img src="https://img.shields.io/badge/iOS-26.5-3E5A3F" alt="iOS 26.5">
-  <img src="https://img.shields.io/badge/Xcode-26-3E5A3F" alt="Xcode 26">
+  <img src="https://img.shields.io/badge/iOS-26-3E5A3F" alt="iOS 26">
+  <img src="https://img.shields.io/badge/Xcode-26.4-3E5A3F" alt="Xcode 26.4">
 </p>
 
 <p align="center"><b><a href="#the-builders-path">start in 5 minutes</a> · <a href="#tips">tips</a> · <a href="#two-asks-until-launch">two asks</a></b></p>
@@ -68,7 +68,7 @@ the ring sets up, what you say lands on your iphone as words, gets a title and n
    git clone https://github.com/its4ff/museo-build-a-bear.git
    ```
 
-2. **open it in Xcode 26** and run. no ring yet? on a simulator, tap *load the samples*.
+2. **open it in Xcode 26.4 or newer** and run. no ring yet? on a simulator, tap *load the samples*.
 3. **make it yours** in `Config/Local.xcconfig`: team, bundle id, name.
 4. **pick where muses live:** on the phone, or your own backend from [`App/YourCode.swift`](museo%20build/App/YourCode.swift).
 5. **vibe code it** in Claude Code or Cursor. [`AGENTS.md`](AGENTS.md) keeps your agent off the ring and the firmware.
@@ -98,8 +98,8 @@ made something you love? show naveed at [x.com/naveedg](https://x.com/naveedg), 
 
 | | |
 |---|---|
-| **to try it** | a Mac with Xcode 26 (iOS 26.5 SDK or newer). the simulator runs everything but the ring. |
-| **for the ring** | a museo ring and an iphone on iOS 26.5 or newer. |
+| **to try it** | a Mac with Xcode 26.4 or newer. the simulator runs everything but the ring. |
+| **for the ring** | a museo ring and an iphone on iOS 26 or newer. |
 | **for titles and notes** | Apple Intelligence turned on (iphone 15 Pro or newer). without it, muses still get their words. |
 | **an Apple account** | a free one works on your own iphone, but the app stops opening after 7 days until you run it from Xcode again. a paid developer account lasts a year and adds TestFlight. |
 

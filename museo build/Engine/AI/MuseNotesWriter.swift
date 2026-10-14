@@ -245,19 +245,24 @@ enum MuseNotesWriter {
         "their words:\n\n\(words)"
     }
 
+    // The model counts tokens from iOS 26.4. Before that, the estimate below stands in.
+
     private static func tokens(_ prompt: String) async -> Int {
-        (try? await SystemLanguageModel.default.tokenCount(for: Prompt(prompt))) ?? estimate(prompt)
+        guard #available(iOS 26.4, *) else { return estimate(prompt) }
+        return (try? await SystemLanguageModel.default.tokenCount(for: Prompt(prompt))) ?? estimate(prompt)
     }
 
     private static func tokens(instructions: String) async -> Int {
-        (try? await SystemLanguageModel.default.tokenCount(for: Instructions(instructions))) ?? estimate(instructions)
+        guard #available(iOS 26.4, *) else { return estimate(instructions) }
+        return (try? await SystemLanguageModel.default.tokenCount(for: Instructions(instructions))) ?? estimate(instructions)
     }
 
     private static func tokens(schema: GenerationSchema) async -> Int {
-        (try? await SystemLanguageModel.default.tokenCount(for: schema)) ?? 400
+        guard #available(iOS 26.4, *) else { return 400 }
+        return (try? await SystemLanguageModel.default.tokenCount(for: schema)) ?? 400
     }
 
-    /// When the model can't count: about 1.4 tokens for each word between spaces, and one
+    /// When the model can't count (before iOS 26.4, or when counting fails): about 1.4 tokens for each word between spaces, and one
     /// for each character of Chinese, Japanese, Thai or Korean, which take about a token
     /// a character.
     nonisolated static func estimate(_ text: String) -> Int {

@@ -2,7 +2,7 @@
 
 museo build is the open iOS starting point for museo, the ring you whisper to. Out of the box it sets the ring up, brings in everything you say (streamed as you talk, or later from the ring's own memory), turns it into words on the iphone, titles it, writes notes for the longer ones, and keeps them in a library you can search, copy and share.
 
-You build your own thing on top: your screens, your code reacting to every muse. SwiftUI, iOS 26.5, no backend, and no muse (audio, words, titles, notes) leaves the phone unless your code sends it.
+You build your own thing on top: your screens, your code reacting to every muse. SwiftUI, iOS 26, no backend, and no muse (audio, words, titles, notes) leaves the phone unless your code sends it.
 
 Humans start at `README.md`. This file is the rules. Paths are inside the app folder `museo build/` unless they name a repo-root file.
 
@@ -186,7 +186,7 @@ museo build adds:
 
 ## Engineering
 
-- iOS 26.5, Swift 5 mode, `SWIFT_DEFAULT_ACTOR_ISOLATION = MainActor`, approachable concurrency. Plain types are main-actor by default.
+- iOS 26.0 and up (built with Xcode 26.4 or newer), Swift 5 mode, `SWIFT_DEFAULT_ACTOR_ISOLATION = MainActor`, approachable concurrency. Plain types are main-actor by default.
 - Member import visibility is on. Each file imports what it uses:
   - `import Foundation` for `URL`, `Date` and `String` methods
   - `import MuseoKit` for anything from the ring (`RingStatus`, `RingModel`, `Museo`), even when the type name never appears (`.linked`)
