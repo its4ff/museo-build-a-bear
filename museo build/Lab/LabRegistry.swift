@@ -111,10 +111,10 @@ enum LabRegistry {
                     }
                 }
             },
-            LabScreen("firmware.sending", title: "firmware · sending", note: "42% of the image on its way") {
+            LabScreen("firmware.sending", title: "firmware · sending", note: "42% of the image on its way, about 24 s left") {
                 LabStage(LabWorld()) { _ in
                     LabSheet(.medium) { HomeView() } content: {
-                        FirmwareSheetContent(phase: .sending(progress: 0.42), status: "sending firmware")
+                        FirmwareSheetContent(phase: .sending(progress: 0.42), status: "sending firmware", finishAt: .now.addingTimeInterval(24))
                     }
                 }
             },

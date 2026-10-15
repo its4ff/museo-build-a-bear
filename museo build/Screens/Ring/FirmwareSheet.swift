@@ -27,6 +27,7 @@ struct FirmwareSheet: View {
         FirmwareSheetContent(
             phase: firmware.phase,
             status: firmware.status,
+            finishAt: firmware.estimatedFinishAt,
             canUpdate: canUpdate,
             onUpdate: { firmware.start() },
             onNeedRing: onNeedRing,
@@ -47,6 +48,8 @@ struct FirmwareSheetContent: View {
     let phase: Phase
     /// The updater's own short line ("sending firmware", "checking the ring").
     var status: String = ""
+    /// When the updater expects to be done (`estimatedFinishAt`): the countdown.
+    var finishAt: Date? = nil
     var canUpdate: Bool = true
     var onUpdate: () -> Void = {}
     var onNeedRing: () -> Void = {}
@@ -127,19 +130,44 @@ struct FirmwareSheetContent: View {
     }
 
     private func progressBlock(_ fraction: Double) -> some View {
-        VStack(alignment: .trailing, spacing: MuseSpacing.xs) {
-            RingMeter(fraction: fraction, height: 6)
-            if let sent = sentPercent {
-                Text(verbatim: "\(sent)%")
-                    .font(MuseType.meta)
-                    .monospacedDigit()
-                    .foregroundStyle(MuseColor.ink70)
-                    .contentTransition(.numericText(value: Double(sent)))
+        TimelineView(.periodic(from: .now, by: 1)) { context in
+            let left = timeLeft(at: context.date)
+            VStack(alignment: .leading, spacing: MuseSpacing.xs) {
+                RingMeter(fraction: fraction, height: 6)
+                HStack(alignment: .firstTextBaseline) {
+                    if let left {
+                        Text(left)
+                            .foregroundStyle(MuseColor.ink55)
+                            .contentTransition(.numericText(countsDown: true))
+                    }
+                    Spacer(minLength: MuseSpacing.sm)
+                    if let sent = sentPercent {
+                        Text(verbatim: "\(sent)%")
+                            .foregroundStyle(MuseColor.ink70)
+                            .contentTransition(.numericText(value: Double(sent)))
+                    }
+                }
+                .font(MuseType.meta)
+                .monospacedDigit()
             }
+            .accessibilityElement(children: .ignore)
+            .accessibilityLabel("update progress")
+            .accessibilityValue(
+                [sentPercent.map { "\($0) percent sent" } ?? "\(Int((fraction * 100).rounded())) percent", left]
+                    .compactMap(\.self)
+                    .joined(separator: ", ")
+            )
         }
-        .accessibilityElement(children: .ignore)
-        .accessibilityLabel("update progress")
-        .accessibilityValue(sentPercent.map { "\($0) percent sent" } ?? "\(Int((fraction * 100).rounded())) percent")
+    }
+
+    /// "about 40 s left", "about 1 min left", then "a moment". Only while it runs.
+    private func timeLeft(at now: Date) -> String? {
+        guard phase.isBusy, let finishAt else { return nil }
+        let seconds = Int(finishAt.timeIntervalSince(now).rounded(.up))
+        if seconds < 3 { return "a moment" }
+        if seconds < 60 { return "about \(seconds) s left" }
+        let minutes = Int((Double(seconds) / 60).rounded())
+        return "about \(minutes) min left"
     }
 
     /// While sending, how much of the image has gone over: the number people see.
@@ -294,7 +322,7 @@ struct FirmwareSheetContent: View {
 }
 
 #Preview("sending") {
-    FirmwareSheetContent(phase: .sending(progress: 0.42), status: "sending firmware")
+    FirmwareSheetContent(phase: .sending(progress: 0.42), status: "sending firmware", finishAt: .now.addingTimeInterval(24))
 }
 
 #Preview("confirming") {
