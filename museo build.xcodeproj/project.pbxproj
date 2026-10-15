@@ -388,7 +388,7 @@
 			repositoryURL = "https://github.com/its4ff/museo-kit.git";
 			requirement = {
 				kind = exactVersion;
-				version = 0.1.0;
+				version = 0.2.0;
 			};
 		};
 		9CF608A1303F558B0095ABA8 /* XCRemoteSwiftPackageReference "desert-ant-core" */ = {

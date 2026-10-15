@@ -57,7 +57,7 @@ struct RingSummary: View {
 }
 ```
 
-`RingStatus` fields: `link` (`.notSetUp`, `.bluetoothOff`, `.joining`, `.away`, `.linked`), `name`, `advertisedName` ("Muse_47cf"), `battery` (5% steps), `isCharging`, `batteryIsStale`, `batteryReadAt`, `isLive`, `liveSince`, `isRecordingOnRing`, `isSyncing`, `syncProgress`, `waiting`, `freeStoragePercent`, `autoSync`, `autoClear`, `syncError`, `usesAccessorySetup`, `isFirmwareUpdating`, `userDisconnected`, `isSettingUp`, `setupNote`, `canRename`.
+`RingStatus` fields: `link` (`.notSetUp`, `.bluetoothOff`, `.joining`, `.away`, `.linked`), `name`, `advertisedName` ("Museo_47cf"), `battery` (5% steps), `isCharging`, `batteryIsStale`, `batteryReadAt`, `isLive`, `liveSince`, `isRecordingOnRing`, `isSyncing`, `syncProgress`, `waiting`, `freeStoragePercent`, `autoSync`, `autoClear`, `syncError`, `usesAccessorySetup`, `isFirmwareUpdating`, `userDisconnected`, `isSettingUp`, `setupNote`, `canRename`.
 
 Derived: `isLinked`, `needsAttention`, `isLowBattery`, `isStorageLow`, `minutesLeft`. Memory recording is `isRecordingOnRing && !isLive` (the ring also reports recording while streaming).
 
@@ -81,9 +81,10 @@ Fixtures for previews and the lab: `.notSetUp`, `.joining`, `.linked`, `.linkedL
 
 ## How setup works (AccessorySetupKit)
 
-- The app's `Config/Info.plist` declares `NSAccessorySetupKitSupports` [Bluetooth], `NSAccessorySetupBluetoothServices` [0004] and `NSAccessorySetupBluetoothNames` [Muse_]. That puts the app in ASK mode: iOS's own accessory sheet sets the ring up, there's no bluetooth prompt, and the app only sees rings set up through that sheet.
+- The app's `Config/Info.plist` declares `NSAccessorySetupKitSupports` [Bluetooth], `NSAccessorySetupBluetoothServices` [0004] and `NSAccessorySetupBluetoothNames` [Museo]. That puts the app in ASK mode: iOS's own accessory sheet sets the ring up, there's no bluetooth prompt, and the app only sees rings set up through that sheet.
 - The sheet names the ring `AppConfig.ringName` ("museo"). The first app to set a ring up names it for every app.
-- Remove the three `NSAccessorySetup…` keys and setup falls back to a plain scan that connects the closest ring that answers in 20 s.
+- Only rings with "Museo" in the name are set up (firmware 10.14 and later, `Museo_47cf`). An older `Muse_47cf` ring never shows in the sheet; one set up before keeps linking so it can take the update.
+- Remove the three `NSAccessorySetup…` keys and setup falls back to a plain scan that connects the closest museo ring that answers in 20 s.
 
 ## Rules
 

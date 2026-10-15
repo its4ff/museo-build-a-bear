@@ -6,7 +6,7 @@
 	<string>$(MUSEO_FULL_NAME)</string>
 	<key>NSAccessorySetupBluetoothNames</key>
 	<array>
-		<string>Muse_</string>
+		<string>Museo</string>
 	</array>
 	<key>NSAccessorySetupBluetoothServices</key>
 	<array>

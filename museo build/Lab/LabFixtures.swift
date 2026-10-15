@@ -105,7 +105,7 @@ enum LabFixtures {
     static let ringEvents = [
         "09:12:03.114 picker shown",
         "09:12:09.870 accessory added · museo",
-        "09:12:11.402 linked · Muse_47cf",
+        "09:12:11.402 linked · Museo_47cf",
     ]
 
     /// Away since 9:14a.

@@ -660,7 +660,7 @@ private extension RingStatus {
 
 private let previewEvents = [
     "09:41:02.114 activated accessories=1",
-    "09:41:02.380 handOff Muse_47cf",
+    "09:41:02.380 handOff Museo_47cf",
     "09:41:03.902 linked",
 ]
 
