@@ -68,7 +68,7 @@ the ring sets up, what you say lands on your iphone as words, gets a title and n
    git clone https://github.com/its4ff/museo-build-a-bear.git
    ```
 
-2. **open it in Xcode 26.4 or newer** and run. no ring yet? on a simulator, tap *load the samples*.
+2. **open it in Xcode 26.4 or newer** and run.
 3. **make it yours** in `Config/Local.xcconfig`: team, bundle id, name.
 4. **pick where muses live:** on the phone, or your own backend from [`App/YourCode.swift`](museo%20build/App/YourCode.swift).
 5. **vibe code it** in Claude Code or Cursor. [`AGENTS.md`](AGENTS.md) keeps your agent off the ring and the firmware.
