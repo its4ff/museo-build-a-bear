@@ -81,10 +81,10 @@ Fixtures for previews and the lab: `.notSetUp`, `.joining`, `.linked`, `.linkedL
 
 ## How setup works (AccessorySetupKit)
 
-- The app's `Config/Info.plist` declares `NSAccessorySetupKitSupports` [Bluetooth], `NSAccessorySetupBluetoothServices` [0004] and `NSAccessorySetupBluetoothNames` [Museo]. That puts the app in ASK mode: iOS's own accessory sheet sets the ring up, there's no bluetooth prompt, and the app only sees rings set up through that sheet.
+- The app's `Config/Info.plist` declares `NSAccessorySetupKitSupports` [Bluetooth], `NSAccessorySetupBluetoothServices` [0004] and `NSAccessorySetupBluetoothNames` [Muse]. That puts the app in ASK mode: iOS's own accessory sheet sets the ring up, there's no bluetooth prompt, and the app only sees rings set up through that sheet.
 - The sheet names the ring `AppConfig.ringName` ("museo"). The first app to set a ring up names it for every app.
-- Only rings with "Museo" in the name are set up (firmware 10.14 and later, `Museo_47cf`). An older `Muse_47cf` ring never shows in the sheet; one set up before keeps linking so it can take the update.
-- Remove the three `NSAccessorySetup…` keys and setup falls back to a plain scan that connects the closest museo ring that answers in 20 s.
+- The sheet matches "Muse" in the name: `Museo_47cf` (firmware 10.14 and later) and `Muse_47cf` (earlier) both show.
+- Remove the three `NSAccessorySetup…` keys and setup falls back to a plain scan that connects the closest ring with "Muse" in its name that answers in 20 s.
 
 ## Rules
 

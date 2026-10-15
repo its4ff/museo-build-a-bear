@@ -90,7 +90,7 @@ struct RingBattery: View {
 Two things to know today:
 - Tapping "disconnect" in the ring sheet also stops a memory recording in progress.
 - The bundled firmware is 10.14. From 10.14 on, the ring calls itself `Museo_47cf` (before, `Muse_47cf`).
-- Setup only finds rings with "Museo" in the name. A ring on older firmware won't show in the sheet; update it first. A ring that was already set up keeps linking, so this app can update it.
+- Setup finds rings with "Muse" in the name, so both `Museo_47cf` and older `Muse_47cf` rings show in the sheet.
 - The kit can't read the ring's version yet, so it can't tell whether a ring already runs 10.14.
 
 ## what could open up later
