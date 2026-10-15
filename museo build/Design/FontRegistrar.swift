@@ -1,7 +1,7 @@
 import CoreText
 import Foundation
 
-/// Registers Lora and Satoshi from `Shared/` before the first view draws.
+/// Registers Lora and Satoshi from `Design/Fonts/` before the first view draws.
 /// `MuseFont` resolves names once and caches them, so this must run in `App.init`.
 nonisolated enum FontRegistrar {
     static func registerBundledFonts() {

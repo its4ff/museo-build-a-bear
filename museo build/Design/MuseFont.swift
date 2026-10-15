@@ -15,7 +15,7 @@ import UIKit
 /// Lora, Satoshi, SF Symbols and SF Mono at any size. Most screens want `MuseType` instead.
 nonisolated enum MuseFont {
 
-    /// The faces museo build ships. Lora and Satoshi are variable fonts (`Shared/`); CoreText
+    /// The faces museo build ships. Lora and Satoshi are variable fonts (`Design/Fonts/`); CoreText
     /// names their named instances "<postscript name>_<instance>". Lora italic is a static
     /// file in `Design/Fonts/`.
     nonisolated enum Face: String, CaseIterable, Sendable {

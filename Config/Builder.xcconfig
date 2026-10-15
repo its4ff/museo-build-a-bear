@@ -1,19 +1,22 @@
-// Your app's identity, in one place. Both targets read it: the app, and its widget (the
-// same bundle id plus ".widget").
+// Your app's identity, in one place.
 //
-// Change the three lines below, or put your own values in Local.xcconfig next to this file.
-// Local.xcconfig is read last and gitignored, so your team and ids stay out of git and
-// pulling museo build updates never conflicts with them.
+// To run on your iphone, pick your team in Xcode (the museo build target › Signing &
+// Capabilities). That's all: the bundle id below follows your team, so it's yours already.
 //
-//   DEVELOPMENT_TEAM   your team id (Xcode › Settings › Accounts). Leave it blank for
-//                      the simulator. A phone needs one; a free Apple account works.
+// To name the app or choose your own bundle id, add Local.xcconfig next to this file with
+// the lines you want to change. It's read last and gitignored, so your ids stay out of git
+// and pulling museo build updates never conflicts with them.
+//
+//   DEVELOPMENT_TEAM   your team id (Xcode › Settings › Accounts), if you'd rather keep it
+//                      here than in the project. Blank is fine for the simulator. A phone
+//                      needs one; a free Apple account works.
 //   MUSEO_BUNDLE_ID    a reverse domain that's yours, like com.yourname.museo
 //   MUSEO_APP_NAME     the name under the app's icon
 //   MUSEO_FULL_NAME    the name build › about shows. The icon's name unless you set it,
 //                      for when the full one is too long to fit under the icon.
 
 DEVELOPMENT_TEAM =
-MUSEO_BUNDLE_ID = com.example.museobuild
+MUSEO_BUNDLE_ID = com.museobuild.$(DEVELOPMENT_TEAM:lower:default=simulator)
 MUSEO_APP_NAME = museo
 MUSEO_FULL_NAME = $(MUSEO_APP_NAME)
 

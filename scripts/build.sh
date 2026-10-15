@@ -1,7 +1,7 @@
 #!/bin/bash
 # museo build: compile for the simulator and print only what matters.
 #
-#   scripts/build.sh                 build the app (+ widget). prints "build ok" and any warnings in
+#   scripts/build.sh                 build the app. prints "build ok" and any warnings in
 #                                    app code, or "build failed" and the errors.
 #   scripts/build.sh errors [path]   build, print "build ok" or "build failed", then the errors under
 #                                    a path, e.g. Screens/Home/

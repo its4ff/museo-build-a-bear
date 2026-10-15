@@ -11,7 +11,7 @@ Humans start at `README.md`. This file is the rules. Paths are inside the app fo
 | Layer | Where | Rule |
 |---|---|---|
 | **Sealed: the ring** | the `MuseoKit` Swift package (GitHub `its4ff/museo-kit`, pinned to an exact version; `scripts/local-kit.sh` swaps in a local `../museo-kit` for kit work) | Never copied in, edited, wrapped or worked around. Bluetooth, the ring's protocol, sync, setup and firmware all live there. |
-| **Stable: capture** | `Engine/` (pipeline, speech, titles and notes, search), `Model/`, `LiveActivity/` | Works, and the order matters. Change it when you know why. |
+| **Stable: capture** | `Engine/` (pipeline, speech, titles and notes, search), `Model/` | Works, and the order matters. Change it when you know why. |
 | **Yours** | `App/` (start with `App/YourCode.swift`), `Screens/`, `Design/` | Change or delete anything. |
 
 ## Hard rules
@@ -26,7 +26,7 @@ Humans start at `README.md`. This file is the rules. Paths are inside the app fo
   - `RingModel.status`: in views.
   - `RingActions`: for ring buttons.
   - `Museo.firmware`: the updater.
-- `Museo.manager` (the kit's `RingBLEManager`) is for low-level tools: the ring console and ring tools in build › ring, and the Live Activity. Screens never read it.
+- `Museo.manager` (the kit's `RingBLEManager`) is for low-level tools: the ring console and ring tools in build › ring. Screens never read it.
 - If a task seems to need the ring's protocol, say so and stop. It's a kit change, not app code.
 
 ```swift
@@ -76,11 +76,10 @@ Museo.onEvent { event in if case .liveStarted = event { MuseHaptics.play(.soft) 
 | Transcription | `Engine/Speech/` (`SpeechEngine`, `SpeechSettings`); UI in build › speech |
 | Onboarding and the cheat card | `Screens/Onboarding/` |
 | The ring icon and sheet | `Screens/Ring/`, reading `RingModel.status`; actions through `RingActions` |
-| Your team, bundle id, the name under the icon (and a longer one for build › about) | `Config/Builder.xcconfig`, or `Config/Local.xcconfig` (gitignored, read last) to keep them out of git. Both targets read it; the widget is the bundle id plus `.widget`. |
+| Your team, bundle id, the name under the icon (and a longer one for build › about) | The team: Xcode's Signing & Capabilities, or `DEVELOPMENT_TEAM`. The bundle id defaults to `com.museobuild.<team>`. Override any of them in `Config/Local.xcconfig` (gitignored, read last), not `Config/Builder.xcconfig`. |
 | The app's name on screen, the ring's name, vocabulary, credits, a contact row | `App/AppConfig.swift` (`appName`, `ringName`, `vocabulary`, `madeBy`, `contact`) |
 | Startup order | `App/AppStart.swift` |
 | The muse model | `Model/Muse.swift`, `Model/MuseNotes.swift`, `Model/MuseStore.swift`. A new field needs a default and `decodeIfPresent`. |
-| Live Activity, widget | `LiveActivity/`, `museo build widget/`, `Shared/MuseActivityAttributes.swift` (change them together) |
 | Tools and settings for building (speech, ring console) | `Screens/Build/` |
 | The look | tokens in `Design/` (the lab's `designkit` screen shows every one) |
 | Mock screens for screenshots | `Lab/` (DEBUG only). `Lab/Probes/` holds debug checks for notes and joining. |
@@ -202,7 +201,7 @@ museo build adds:
 
 ## Run and verify
 
-- **The ring needs a real iPhone.** The simulator has no Bluetooth. Put your team and bundle id in `Config/Builder.xcconfig` (or `Local.xcconfig`) first.
+- **The ring needs a real iPhone.** The simulator has no Bluetooth. Pick a team first (Signing & Capabilities, or `DEVELOPMENT_TEAM` in `Config/Local.xcconfig`); the bundle id follows it. The app is iPhone only.
 - **Everything else runs in the simulator.** Without a ring, "load the samples" on the empty home fills the library, and `MusePipeline.shared.addTyped(…)` makes a muse from code. The lab's mock screens need neither.
 - **Build:** `scripts/build.sh` prints "build ok" and any warnings in app code, or "build failed" and the errors.
   - `scripts/build.sh errors Screens/Home/` and `scripts/build.sh warnings Engine/` filter to a path.

@@ -21,11 +21,11 @@ Each finding is one line: `file:line · what's wrong · the fix`. If everything 
 Every line of output is a finding.
 
 ```bash
-APP="museo build"; WIDGET="museo build widget"
+APP="museo build"
 
 # the ring is sealed: no bluetooth, no manager, no callbacks, no kit files copied in
-grep -rln 'import CoreBluetooth' --include='*.swift' "$APP" "$WIDGET" Shared
-grep -rnE 'RingBLEManager\(\)|CBCentralManager|CBPeripheral\b|\.writeValue\(' --include='*.swift' "$APP" "$WIDGET"
+grep -rln 'import CoreBluetooth' --include='*.swift' "$APP"
+grep -rnE 'RingBLEManager\(\)|CBCentralManager|CBPeripheral\b|\.writeValue\(' --include='*.swift' "$APP"
 grep -rnE '\.(onCaptureStateChange|onSyncStarted|onSyncEnded|onSyncProgress)[[:space:]]*=' --include='*.swift' "$APP"
 grep -rnE 'Museo\.onCapture' --include='*.swift' "$APP" | grep -v 'Engine/Pipeline/MusePipeline.swift'
 grep -rnE 'Museo\.manager|RingBLEManager' --include='*.swift' "$APP/Screens" | grep -vE ':[0-9]+:[[:space:]]*//' | grep -vE 'Screens/Build/(RingConsoleView|RingToolsSection)\.swift'
@@ -33,22 +33,22 @@ grep -rnE 'clearRingStorage\(|\.clearStorage\(' --include='*.swift' "$APP" | gre
 find "$APP" -name 'TreatyProtocol.swift' -o -name 'RingBLEManager.swift' -o -name 'OpusWavDecoder.swift' -o -name 'Package.swift'
 
 # forbidden APIs and raw styling (comment lines skipped)
-grep -rnE 'showsIndicators|\.foregroundColor\(|NavigationView|Color\(red|UIColor\(red|\.system\(size|\.font\(\.(largeTitle|title|title2|title3|headline|subheadline|body|callout|footnote|caption|caption2)\)|preferredColorScheme\(\.dark' --include='*.swift' "$APP" "$WIDGET" | grep -vE ':[0-9]+:[[:space:]]*//'
+grep -rnE 'showsIndicators|\.foregroundColor\(|NavigationView|Color\(red|UIColor\(red|\.system\(size|\.font\(\.(largeTitle|title|title2|title3|headline|subheadline|body|callout|footnote|caption|caption2)\)|preferredColorScheme\(\.dark' --include='*.swift' "$APP" | grep -vE ':[0-9]+:[[:space:]]*//'
 grep -rnE 'Color\(hex|0x[0-9A-Fa-f]{6}\)' --include='*.swift' "$APP" | grep -v 'Design/MuseColor.swift'
 grep -rnE '(\.padding\((\.[a-zA-Z]+, )?|spacing: |cornerRadius: )(4|8|10|12|14|16|18|20|24|28|40)[,)]' --include='*.swift' "$APP/Screens" "$APP/Lab"
 
 # voice: dashes, exclamation marks, title case in string literals
-grep -rnE '"[^"]*(—|–)[^"]*"' --include='*.swift' "$APP" "$WIDGET" | grep -vE ':[0-9]+:[[:space:]]*//|replacingOccurrences|print\(|Logger'
-grep -rnE '"[^"]*[a-z]! [^"]*"|"[^"]*[a-z]!"' --include='*.swift' "$APP" "$WIDGET" | grep -vE ':[0-9]+:[[:space:]]*//|print\('
-grep -rnE '(Text|Label|Button|Toggle|Menu|Section|accessibilityLabel|accessibilityHint|accessibilityValue|navigationTitle|confirmationDialog|MuseSectionHeader|MuseHintCard|MuseListRow|MuseToggleRow|MuseToast|MuseEyebrow)\("[A-Z][a-z]|(title|subtitle|label|meta|placeholder|caption|name|body): "[A-Z][a-z]' --include='*.swift' "$APP" "$WIDGET" | grep -vE ':[0-9]+:[[:space:]]*//|UIFont\(name:|\.custom\('
+grep -rnE '"[^"]*(—|–)[^"]*"' --include='*.swift' "$APP" | grep -vE ':[0-9]+:[[:space:]]*//|replacingOccurrences|print\(|Logger'
+grep -rnE '"[^"]*[a-z]! [^"]*"|"[^"]*[a-z]!"' --include='*.swift' "$APP" | grep -vE ':[0-9]+:[[:space:]]*//|print\('
+grep -rnE '(Text|Label|Button|Toggle|Menu|Section|accessibilityLabel|accessibilityHint|accessibilityValue|navigationTitle|confirmationDialog|MuseSectionHeader|MuseHintCard|MuseListRow|MuseToggleRow|MuseToast|MuseEyebrow)\("[A-Z][a-z]|(title|subtitle|label|meta|placeholder|caption|name|body): "[A-Z][a-z]' --include='*.swift' "$APP" | grep -vE ':[0-9]+:[[:space:]]*//|UIFont\(name:|\.custom\('
 grep -rnE '"[^"]*\b(tap|press)(es)? (the|your) ring' --include='*.swift' "$APP" | grep -vE ':[0-9]+:[[:space:]]*//'
-grep -rnE '"[^"]*\blive\b[^"]*"' --include='*.swift' "$APP" "$WIDGET" | grep -vE ':[0-9]+:[[:space:]]*//|live activit|#Preview|print\(|Logger'
+grep -rnE '"[^"]*\blive\b[^"]*"' --include='*.swift' "$APP" | grep -vE ':[0-9]+:[[:space:]]*//|#Preview|print\(|Logger'
 
 # @Generable without nonisolated (Swift 5 mode won't warn)
 grep -rnE -A1 '^[[:space:]]*@Generable' --include='*.swift' "$APP" | grep -E '(struct|enum) ' | grep -v nonisolated
 
 # secrets in source or plists
-grep -rnEi '(api_?key|secret|token|password)[a-z_]*[[:space:]]*[:=][[:space:]]*"[A-Za-z0-9_.-]{16,}"' --include='*.swift' --include='*.plist' "$APP" "$WIDGET" Config
+grep -rnEi '(api_?key|secret|token|password)[a-z_]*[[:space:]]*[:=][[:space:]]*"[A-Za-z0-9_.-]{16,}"' --include='*.swift' --include='*.plist' "$APP" Config
 
 # build: one call. prints "build ok" then any warnings in app code; exits 1 when it lists one.
 # warnings show only for files compiled in that run, so run it right after the edit, not twice.

@@ -26,8 +26,6 @@ enum AppStart {
         Museo.start(name: AppConfig.ringName, clearsRingAfterSync: AppConfig.clearsRingAfterSyncByDefault)
         // Finished recordings become muses, then words and a title.
         MusePipeline.shared.attach()
-        // Listening and syncing on the lock screen and the dynamic island.
-        MuseLiveActivityController.shared.attach()
         // The paper grain is drawn off the main thread before the first frame needs it.
         MuseGrain.warm()
         // The on-device model loads ahead of the first title.
@@ -45,8 +43,6 @@ enum AppStart {
     static func becameActive() {
         // muses.json couldn't be read at launch: try again now.
         MuseStore.shared.reloadIfNeeded()
-        // A capture that started while the app was away shows on the lock screen now.
-        MuseLiveActivityController.shared.reconcile()
         // Catch up: recordings still waiting, words, retries, titles.
         Task { await MusePipeline.shared.sweep() }
         // Words while you hold the ring, on screen as you speak.
