@@ -62,7 +62,7 @@ the ring sets up, what you say lands on your iphone as words, gets a title and n
 
 ## the build-a-bear path
 
-1. **clone it.** one repo: Xcode fetches [museo kit](https://github.com/its4ff/museo-kit), the ring's package, on its own.
+1. **clone it.**
 
    ```bash
    git clone https://github.com/its4ff/museo-build-a-bear.git
