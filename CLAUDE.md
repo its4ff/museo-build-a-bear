@@ -4,7 +4,7 @@
 
 AGENTS.md above is the rulebook. This part is only what's specific to Claude Code.
 
-**Skills** (`.claude/skills/`, identical copies in `.cursor/skills/`):
+**Skills** (`.claude/skills/`, which Cursor reads too):
 - `museo-ux`: build or change a screen with the design system.
 - `museo-review`: the checklist and greps that catch voice, token and ring violations. Reports only failures.
 - `museo-ring`: ring status, the ring icon and sheet, setup, sync, firmware, without touching the kit.

@@ -230,4 +230,4 @@ museo build adds:
 | `museo-review` | after any UI, copy or engine change, before saying done |
 | `museo-ring` | ring status, the ring icon or sheet, setup, sync, firmware, without touching the kit |
 
-Claude Code reads `.claude/skills/`. Cursor reads identical copies in `.cursor/skills/` plus the rules in `.cursor/rules/`.
+The skills live in `.claude/skills/`. Claude Code reads them, and so does Cursor. Cursor reads this file on its own; Claude Code reads it through `CLAUDE.md`.
