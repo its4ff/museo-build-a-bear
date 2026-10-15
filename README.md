@@ -14,7 +14,7 @@
   <img src="https://img.shields.io/badge/Xcode-26.4-3E5A3F" alt="Xcode 26.4">
 </p>
 
-<p align="center"><b><a href="#the-builders-path">start in 5 minutes</a> · <a href="#tips">tips</a> · <a href="#two-asks-until-launch">two asks</a></b></p>
+<p align="center"><b><a href="#the-build-a-bear-path">start in 5 minutes</a> · <a href="#tips">tips</a> · <a href="#two-asks-until-launch">two asks</a></b></p>
 
 > [!IMPORTANT]
 > **preview.** museo build is out ahead of its launch. two small asks [below](#two-asks-until-launch).
@@ -60,7 +60,7 @@ the ring sets up, what you say lands on your iphone as words, gets a title and n
   </tr>
 </table>
 
-## the builder's path
+## the build-a-bear path
 
 1. **clone it.** one repo: Xcode fetches [museo kit](https://github.com/its4ff/museo-kit), the ring's package, on its own.
 
@@ -69,10 +69,11 @@ the ring sets up, what you say lands on your iphone as words, gets a title and n
    ```
 
 2. **open it in Xcode 26.4 or newer** and run.
-3. **make it yours** in `Config/Local.xcconfig`: team, bundle id, name.
-4. **pick where muses live:** on the phone, or your own backend from [`App/YourCode.swift`](museo%20build/App/YourCode.swift).
-5. **vibe code it** in Claude Code or Cursor. [`AGENTS.md`](AGENTS.md) keeps your agent off the ring and the firmware.
-6. **build anything** you can imagine.
+3. **keep your museo ring close by** so you can try it and learn the ropes.
+4. **make it yours** in `Config/Local.xcconfig`: team, bundle id, name.
+5. **pick where muses live:** on the phone, or your own backend from [`App/YourCode.swift`](museo%20build/App/YourCode.swift).
+6. **vibe code it** in Claude Code or Cursor. [`AGENTS.md`](AGENTS.md) keeps your agent off the ring and the firmware.
+7. **build anything** you can imagine.
 
 ## tips
 
