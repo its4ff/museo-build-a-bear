@@ -77,9 +77,9 @@ the ring sets up, what you say lands on your iphone as words, gets a title and n
 
 ## tips
 
+- **one ring, one app.** your ring links to one app at a time. remove it from the build-a-bear app (or any other) before your own app can set it up.
 - **one backend, many apps.** send your muses to a backend like convex, so every app you try starts full.
 - **keep a clean baseline.** one untouched clone. copy it for each idea, until one sticks.
-- **one ring, one app.** remove the ring from the old app before you switch.
 - **the ring lives on iphone.** for a mac app, read your muses from your backend.
 
 > [!TIP]
