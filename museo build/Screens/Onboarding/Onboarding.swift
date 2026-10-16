@@ -108,6 +108,11 @@ final class Onboarding {
     static let slowAfter: Duration = .seconds(6)
     /// A muse said this long before the step began still counts (clocks drift).
     static let slack: TimeInterval = 5
+    /// Taps this soon after a step appears are ignored. Every step keeps its way forward in
+    /// the same spot, so a second tap on the last step's button (or iOS's accessory sheet
+    /// taking a beat to come up) would otherwise land on the next one: "set up your ring"
+    /// then "skip for now" went straight to the card.
+    static let tapSettle: TimeInterval = 0.6
 
     init(
         ring: RingStatus,
@@ -183,6 +188,7 @@ final class Onboarding {
 
     /// The step's way forward: "next", "skip for now".
     func next() {
+        guard isSettled else { return }
         switch step {
         case .hello: go(.setUp)
         // Without a linked ring, streaming and memory have nothing to show.
@@ -195,7 +201,15 @@ final class Onboarding {
 
     func later() { finish() }
 
-    func start() { finish() }
+    func start() {
+        guard isSettled else { return }
+        finish()
+    }
+
+    /// The step has been up long enough that a tap is meant for it.
+    private var isSettled: Bool {
+        Date.now.timeIntervalSince(stepStartedAt) >= Self.tapSettle
+    }
 
     /// A streamed muse's words finished typing in: hold "streamed in." a moment, then memory.
     func wordsShown() {
@@ -303,7 +317,9 @@ final class Onboarding {
         switch status.link {
         case .linked: return .linked
         case .joining: return .joining
-        case .away: return .away
+        // A ring picked in the sheet is set up before the kit starts linking it, which
+        // reads as away for a moment. While the sheet is still up, that's joining.
+        case .away: return status.isSettingUp ? .joining : .away
         case .bluetoothOff: return .bluetoothOff
         case .notSetUp:
             if status.isSettingUp { return .choosing }

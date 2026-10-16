@@ -1,8 +1,9 @@
 import SwiftUI
 import MuseoKit
 
-/// Set up: iOS's accessory sheet comes up over this, and the ring in the well turns from
-/// a dashed outline into a moss band as it links. "linked." holds a beat, then hold.
+/// Set up: iOS's accessory sheet comes up over this, and the booklet's ring (the one hello
+/// showed) breathes while it joins and settles with a soft moss glow as it links.
+/// "linked." holds a beat, then hold.
 struct OnboardingSetUpStep: View {
     let model: Onboarding
 
@@ -13,14 +14,7 @@ struct OnboardingSetUpStep: View {
             note: note
         ) {
             VStack(spacing: MuseSpacing.sm) {
-                OnboardingRingWell(glow: model.setUp == .linked ? MuseColor.moss300 : nil, breathes: isWorking) {
-                    MuseRingGlyph(
-                        fill: model.setUp == .linked ? battery : nil,
-                        style: model.setUp == .linked ? .linked : .setup,
-                        breathing: isWorking,
-                        size: 52
-                    )
-                }
+                OnboardingSetUpRing(linked: model.setUp == .linked, working: isWorking)
                 Text(caption)
                     .font(MuseType.meta)
                     .monospacedDigit()
@@ -32,7 +26,9 @@ struct OnboardingSetUpStep: View {
             if let primary {
                 OnboardingPrimary(primary, haptic: .medium) { model.setUpRing() }
             }
-            if model.setUp != .linked {
+            // Not while the sheet is coming up or the ring is joining: a second tap on the
+            // last button would land here and skip to the end.
+            if canSkip {
                 MuseQuietButton("skip for now") { model.next() }
             }
         }
@@ -42,9 +38,11 @@ struct OnboardingSetUpStep: View {
         model.setUp == .choosing || model.setUp == .joining
     }
 
-    /// The band fills with the battery once there's a reading.
-    private var battery: Double {
-        model.ring.battery.map { Double($0) / 100 } ?? 1
+    private var canSkip: Bool {
+        switch model.setUp {
+        case .ready, .nothing, .away, .bluetoothOff: true
+        case .choosing, .joining, .linked: false
+        }
     }
 
     // MARK: Words
@@ -97,5 +95,44 @@ struct OnboardingSetUpStep: View {
         case .away: "look for it"
         case .choosing, .joining, .linked, .bluetoothOff: nil
         }
+    }
+}
+
+// MARK: - The ring
+
+/// The booklet's ring: faint until it links, breathing while it joins, then full with a
+/// soft moss glow under it.
+private struct OnboardingSetUpRing: View {
+    let linked: Bool
+    let working: Bool
+
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+
+    private static let width: CGFloat = 220
+
+    var body: some View {
+        let art = MuseRingArt(width: Self.width)
+            .opacity(linked ? 1 : 0.6)
+            .background {
+                Ellipse()
+                    .fill(MuseColor.moss300)
+                    .frame(width: Self.width * 0.8, height: Self.width * 0.3)
+                    .blur(radius: MuseSpacing.xl)
+                    .offset(y: Self.width * 0.18)
+                    .opacity(linked ? 0.45 : 0)
+            }
+        Group {
+            if working && !reduceMotion {
+                art.phaseAnimator([false, true]) { view, out in
+                    view.scaleEffect(out ? 1.03 : 1).opacity(out ? 1 : 0.8)
+                } animation: { _ in
+                    .easeInOut(duration: 2.2)
+                }
+            } else {
+                art
+            }
+        }
+        .museAnimation(MuseMotion.smooth, value: linked)
+        .accessibilityHidden(true)
     }
 }

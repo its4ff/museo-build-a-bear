@@ -59,7 +59,7 @@ extension LabRegistry {
                     memory: .landed(LabOnboardingFixtures.memory), drivesItself: false
                 ))
             },
-            LabScreen("onboarding.card", title: "onboarding · the card", note: "the last step: the cheat card and start") {
+            LabScreen("onboarding.card", title: "onboarding · the card", note: "the last step: hold and double click once more, and start") {
                 LabOnboarding(Onboarding(ring: .linked, actions: .preview, step: .card, drivesItself: false))
             },
             LabScreen("cheatcard", title: "cheat card", note: "the page as the home's question mark opens it") {

@@ -2,7 +2,8 @@ import Foundation
 import SwiftUI
 import MuseoKit
 
-/// Hold to stream: hold the ring, say a sentence, let go. The streaming card counts while they
+/// Hold to stream: the booklet's hand shows where the thumb goes. Hold the ring, say a
+/// sentence, let go. The streaming card counts while they
 /// speak, their words forming in it as they say them, holds as "keeping it", then the muse
 /// itself lands with its words typing in. "streamed in." holds a moment and memory comes up
 /// (or they tap next).
@@ -38,7 +39,9 @@ struct OnboardingStreamStep: View {
     private var stage: some View {
         switch model.stream {
         case .waiting, .tooShort, .blank:
-            MuseRingBand(light: .white, lit: false)
+            // How to hold it, as the booklet draws it: on the index finger, the button
+            // toward the thumb.
+            MuseHandArt(width: 300)
                 .transition(.opacity)
         case .listening(let since):
             holding(since: since, endedAt: nil)
