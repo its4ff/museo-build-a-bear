@@ -53,7 +53,7 @@ struct LabRingGlyphs: View {
                     MuseHeader(
                         eyebrow: "lab",
                         title: "ring glyphs.",
-                        subtitle: "the gauge in every style, the three ring buttons, and every ring status.",
+                        subtitle: "the gauge in every style, every ring button, and every ring status.",
                         titleSize: 28
                     )
                     styles
@@ -166,8 +166,10 @@ struct LabRingGlyphs: View {
                             .foregroundStyle(MuseColor.ink55)
                             .lineLimit(1)
                     }
+                    // The island grows with what it says, so it gets its own line.
+                    RingButton(status: fixture.status, style: .island) {}
                     HStack(spacing: MuseSpacing.sm) {
-                        ForEach(RingButtonStyle.allCases) { style in
+                        ForEach(RingButtonStyle.allCases.filter { $0 != .island }) { style in
                             RingButton(status: fixture.status, style: style) {}
                         }
                         Spacer(minLength: 0)

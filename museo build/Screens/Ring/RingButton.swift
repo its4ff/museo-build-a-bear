@@ -23,8 +23,10 @@ import MuseoKit
 /// How the ring icon looks. The default lives in `AppConfig.ringButtonStyle`.
 typealias RingButtonStyle = AppConfig.RingButtonStyle
 
-/// The ring icon. `.glyph` is a 38pt chrome circle with the ring glyph, `.glyphPercent` adds
-/// the battery percent in a capsule, `.pill` is a text pill: "ring · linked".
+/// The ring icon. `.island` (the default) is a capsule that says what the ring is doing and
+/// settles back to the battery, `.glyph` is a 38pt chrome circle with the ring glyph,
+/// `.glyphPercent` adds the battery percent in a capsule, `.pill` is a text pill:
+/// "ring · linked".
 struct RingButton: View {
     let status: RingStatus
     var style: RingButtonStyle
@@ -67,6 +69,8 @@ struct RingButton: View {
             RingPercentFace(status: status)
         case .pill:
             RingPillFace(status: status)
+        case .island:
+            RingIslandFace(status: status)
         }
     }
 }
@@ -253,7 +257,7 @@ private struct RingButtonGallery: View {
     var body: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: MuseSpacing.md) {
-                MuseHeader(title: "ring icon.", subtitle: "every state, in all three styles.", titleSize: 28)
+                MuseHeader(title: "ring icon.", subtitle: "every state, in every style.", titleSize: 28)
                 ForEach(RingStatus.fixtures, id: \.name) { fixture in
                     VStack(alignment: .leading, spacing: MuseSpacing.xxs) {
                         Text(verbatim: fixture.name)

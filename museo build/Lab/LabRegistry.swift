@@ -47,10 +47,10 @@ enum LabRegistry {
 
     private static var ring: [LabScreen] {
         [
-            LabScreen("ring.glyphs", title: "ring · glyphs", note: "every gauge style, the three ring buttons, every ring status") {
+            LabScreen("ring.glyphs", title: "ring · glyphs", note: "every gauge style, every ring button, every ring status") {
                 LabRingGlyphs()
             },
-            LabScreen("ring.glyphs.2", title: "ring · glyphs, the end", note: "every ring status in all three styles") {
+            LabScreen("ring.glyphs.2", title: "ring · glyphs, the end", note: "every ring status in every style") {
                 LabRingGlyphs()
                     .labScrolled(LabScroll.end)
             },

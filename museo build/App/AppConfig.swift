@@ -34,7 +34,7 @@ nonisolated enum AppConfig {
     }
 
     /// How the one ring icon looks.
-    static let ringButtonStyle: RingButtonStyle = .glyph
+    static let ringButtonStyle: RingButtonStyle = .island
 
     /// Fresh muses type their words in, letter by letter, with light key taps.
     static let typesNewWords = true
@@ -51,6 +51,9 @@ nonisolated enum AppConfig {
         case glyphPercent
         /// A text pill: "ring · linked".
         case pill
+        /// One capsule that says what the ring is doing ("bringing in 3", a clock while
+        /// you hold), then settles back to the battery.
+        case island
         var id: String { rawValue }
     }
 }

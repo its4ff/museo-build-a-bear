@@ -51,6 +51,9 @@ struct HomeHeader<Controls: View>: View {
     var count: String?
     /// The empty home before setup says it bigger, so the line steps aside there.
     var showsStatus: Bool = true
+    /// The island already says what the ring is doing, so beside it the line only shows
+    /// what the island doesn't: what to do next.
+    var ringStyle: AppConfig.RingButtonStyle = AppConfig.ringButtonStyle
     let onRing: () -> Void
     @ViewBuilder let controls: Controls
 
@@ -63,8 +66,8 @@ struct HomeHeader<Controls: View>: View {
                     // The circles, not their 44pt targets, meet the gutter.
                     .padding(.trailing, -(MuseTopChrome.hitTarget - MuseTopChrome.circle) / 2)
             }
-            if showsStatus {
-                HomeStatusLine(status: status, action: onRing)
+            if showsStatus, HomeStatusLine.line(for: status, besideIsland: ringStyle == .island) != nil {
+                HomeStatusLine(status: status, besideIsland: ringStyle == .island, action: onRing)
                     .transition(.opacity)
             }
         }
@@ -106,8 +109,12 @@ extension HomeHeader where Controls == EmptyView {
 /// streams in or a sync runs (the dot is moss: clay is only for consequence). Quiet ink
 /// otherwise. Tapping it opens the ring sheet. A nearly full ring says so here, with a
 /// chevron: the ring sheet has the one thing that makes room.
+///
+/// Beside the island it says only what the island can't: set up, make room, how to wake
+/// a ring that's away, turn bluetooth on. Otherwise it steps aside (`line` is nil).
 struct HomeStatusLine: View {
     let status: RingStatus
+    var besideIsland = false
     let action: () -> Void
 
     var body: some View {
@@ -144,12 +151,22 @@ struct HomeStatusLine: View {
     /// Linked, nearly full and idle: the line says so until there's room again.
     private var asksForRoom: Bool { status.room != nil && !status.isSyncing }
 
+    var line: String { Self.line(for: status, besideIsland: besideIsland) ?? "" }
+
     /// "ring linked", "listening…", "bringing in 3", "ring nearly full · about 22 min left",
-    /// "set up your ring to begin".
-    var line: String {
+    /// "set up your ring to begin". Beside the island, nil unless there's something to do.
+    static func line(for status: RingStatus, besideIsland: Bool) -> String? {
+        let asksForSetUp = status.link == .notSetUp && !status.isFirmwareUpdating
+        let asksForRoom = status.room != nil && !status.isSyncing
         if asksForSetUp { return "set up your ring to begin" }
         if asksForRoom, let storage = status.storageLine { return "ring \(storage)" }
-        return status.shortLine
+        guard besideIsland else { return status.shortLine }
+        guard !status.isFirmwareUpdating else { return nil }
+        switch status.link {
+        case .away: return status.headline
+        case .bluetoothOff: return status.deviceLine
+        case .notSetUp, .joining, .linked: return nil
+        }
     }
 
     private var dotColor: Color {
@@ -167,7 +184,7 @@ struct HomeStatusLine: View {
 #Preview("home header") {
     @Previewable @State var sort = LibrarySort.newest
     VStack(alignment: .leading, spacing: MuseSpacing.xl) {
-        HomeChrome(status: .linked, ringStyle: .glyph, onBuild: {}, onHowItWorks: {}, onRing: {})
+        HomeChrome(status: .linked, ringStyle: .island, onBuild: {}, onHowItWorks: {}, onRing: {})
         HomeHeader(status: .linked, count: "12 · 3 today", onRing: {}) {
             LibraryControls(sort: $sort, searchOpen: false) {}
         }
