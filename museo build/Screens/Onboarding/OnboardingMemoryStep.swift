@@ -9,7 +9,7 @@ struct OnboardingMemoryStep: View {
 
     var body: some View {
         OnboardingPage(
-            title: landed ? "kept on museo." : "double click to record.",
+            title: landed ? "kept on museo." : "double click to record on-device.",
             line: landed
                 ? "it came in when your phone was near. about 3 hours fit on museo."
                 : "double click to start, again to stop. no phone needed.",
