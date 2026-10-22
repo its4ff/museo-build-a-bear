@@ -26,6 +26,9 @@ extension LabRegistry {
             LabScreen("home.full", title: "home · ring nearly full", note: "the status line says so and leads to the ring sheet") {
                 libraryStage(LabWorld(status: LabFixtures.nearlyFullAllIn)) { HomeView(sort: .newest) }
             },
+            LabScreen("home.update", title: "home · firmware update ready", note: "the ring runs older firmware: the island says update, the line leads to the ring sheet") {
+                libraryStage(LabWorld(status: .updateReady)) { HomeView(sort: .newest) }
+            },
             LabScreen("home.streaming", title: "home · streaming", note: "a muse streaming in: the streaming card above the shelf") {
                 libraryStage(LabWorld(status: .live)) {
                     HomeView(sort: .newest)

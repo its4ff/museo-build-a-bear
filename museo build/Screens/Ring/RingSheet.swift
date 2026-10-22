@@ -510,14 +510,21 @@ struct RingSheet: View {
             MuseSectionHeader("firmware")
             MuseListRow(
                 title: "update firmware",
-                meta: status.isFirmwareUpdating
-                    ? "updating now · keep it close"
-                    : "bundled \(BundledFirmware.version)",
-                systemImage: "arrow.down.circle"
+                meta: firmwareMeta,
+                systemImage: status.firmwareIsBehind ? "exclamationmark.circle" : "arrow.down.circle"
             ) {
                 actions.openFirmware()
             }
         }
+    }
+
+    /// "new firmware is ready · 10.14" when the ring runs older firmware, "up to date ·
+    /// 10.14" once it reports the bundled image, "bundled 10.14" before it has said.
+    private var firmwareMeta: String {
+        if status.isFirmwareUpdating { return "updating now · keep it close" }
+        if status.firmwareIsBehind { return "new firmware is ready · \(BundledFirmware.version)" }
+        if status.firmwareVersion == BundledFirmware.imageVersion { return "up to date · \(BundledFirmware.version)" }
+        return "bundled \(BundledFirmware.version)"
     }
 
     private var oneAppNote: some View {

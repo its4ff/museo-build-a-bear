@@ -69,6 +69,14 @@ enum LabRegistry {
                     }
                 }
             },
+            LabScreen("ring.sheet.update", title: "ring sheet · firmware update ready", note: "large, scrolled to the end: the firmware row says new firmware is ready") {
+                LabStage(LabWorld(status: .updateReady)) { world in
+                    LabSheet(.large) { HomeView() } content: {
+                        RingSheet(status: world.ring.status, actions: .preview, events: LabFixtures.ringEvents)
+                            .labScrolled(LabScroll.end)
+                    }
+                }
+            },
             LabScreen("ring.sheet.notsetup", title: "ring sheet · not set up", note: "large, before any ring") {
                 LabStage(LabWorld(muses: [], status: .notSetUp)) { world in
                     LabSheet(.large) { HomeView() } content: {

@@ -57,20 +57,21 @@ struct RingSummary: View {
 }
 ```
 
-`RingStatus` fields: `link` (`.notSetUp`, `.bluetoothOff`, `.joining`, `.away`, `.linked`), `name`, `advertisedName` ("Museo_47cf"), `battery` (5% steps), `isCharging`, `batteryIsStale`, `batteryReadAt`, `isLive`, `liveSince`, `isRecordingOnRing`, `isSyncing`, `syncProgress`, `waiting`, `freeStoragePercent`, `autoSync`, `autoClear`, `syncError`, `usesAccessorySetup`, `isFirmwareUpdating`, `userDisconnected`, `isSettingUp`, `setupNote`, `canRename`.
+`RingStatus` fields: `link` (`.notSetUp`, `.bluetoothOff`, `.joining`, `.away`, `.linked`), `name`, `advertisedName` ("Museo_47cf"), `battery` (5% steps), `isCharging`, `batteryIsStale`, `batteryReadAt`, `isLive`, `liveSince`, `isRecordingOnRing`, `isSyncing`, `syncProgress`, `waiting`, `freeStoragePercent`, `autoSync`, `autoClear`, `syncError`, `usesAccessorySetup`, `isFirmwareUpdating`, `firmwareVersion`, `userDisconnected`, `isSettingUp`, `setupNote`, `canRename`.
 
-Derived: `isLinked`, `needsAttention`, `isLowBattery`, `isStorageLow`, `minutesLeft`. Memory recording is `isRecordingOnRing && !isLive` (the ring also reports recording while streaming).
+Derived: `isLinked`, `needsAttention`, `isLowBattery`, `isStorageLow`, `minutesLeft`, `firmwareIsBehind`. Memory recording is `isRecordingOnRing && !isLive` (the ring also reports recording while streaming).
 
 Ready-made copy in the house voice (use it, don't write your own): `headline`, `shortLine`, `deviceLine`, `batteryLine`, `storageLine`, `accessibilityLabel`.
 
-Fixtures for previews and the lab: `.notSetUp`, `.joining`, `.linked`, `.linkedLow`, `.charging`, `.live` (streaming), `.syncing`, `.nearlyFull`, `.away`, `.bluetoothOff`, and `RingStatus.fixtures` (all of them, named).
+Fixtures for previews and the lab: `.notSetUp`, `.joining`, `.linked`, `.linkedLow`, `.charging`, `.live` (streaming), `.syncing`, `.nearlyFull`, `.updateReady`, `.away`, `.bluetoothOff`, and `RingStatus.fixtures` (all of them, named).
 
 ## Make the ring do something
 
 - **From any screen:** open the ring sheet. `@Environment(AppRouter.self) private var router`, then `router.open(.ring)`. Firmware is `router.open(.firmware)`.
 - **In a view that needs a command:** take `RingActions` as a parameter, like `RingSheet(status:actions:events:)`. `App/RootView.swift` builds the live one with `RingActions.live(openFirmware:)`; previews and lab pass `.preview`.
 - **In your code:** `Museo.onEvent { event in … }` to react. To act, use `RingActions.live(openFirmware:)`'s closures.
-- **Not available yet** (kit work): the ring's firmware version, remapping click and three clicks, recording sound (the firmware's noise reduction and AGC changed nothing in testing; the kit keeps noise reduction at 0). Never add a bitrate control: it's always 24 kbps. Say so and stop rather than reaching for bluetooth.
+- **Firmware version:** `status.firmwareVersion` ("1.64", read on every connect) and `status.firmwareIsBehind` (older than `BundledFirmware.imageVersion`). The island says "update" with an exclamation point, the home line says "new firmware for your ring", and the ring sheet's firmware row says "new firmware is ready".
+- **Not available yet** (kit work): the updater refusing to resend or downgrade an image, remapping click and three clicks, recording sound (the firmware's noise reduction and AGC changed nothing in testing; the kit keeps noise reduction at 0). Never add a bitrate control: it's always 24 kbps. Say so and stop rather than reaching for bluetooth.
 
 ## The ring screens
 
@@ -97,5 +98,5 @@ Fixtures for previews and the lab: `.notSetUp`, `.joining`, `.linked`, `.linkedL
 ## Test
 
 - Real linking, streaming, memory, sync and firmware need an iPhone and a ring. The simulator has no Bluetooth.
-- Everything else uses fixtures: `#Preview` with `RingModel.preview(.syncing)` or `RingSheet(status: .away, actions: .preview)`, and lab ids `ring.glyphs`, `ring.sheet.linked`, `ring.sheet.notsetup`, `ring.sheet.syncing`, `ring.sheet.away`, `ring.sheet.full`, `ring.sheet.full.clear`, `home.full`, `firmware` (`scripts/lab.sh build-shot ring.glyphs`).
+- Everything else uses fixtures: `#Preview` with `RingModel.preview(.syncing)` or `RingSheet(status: .away, actions: .preview)`, and lab ids `ring.glyphs`, `ring.sheet.linked`, `ring.sheet.notsetup`, `ring.sheet.syncing`, `ring.sheet.away`, `ring.sheet.full`, `ring.sheet.full.clear`, `ring.sheet.update`, `home.full`, `home.update`, `firmware` (`scripts/lab.sh build-shot ring.glyphs`).
 - After changing a ring screen, run `museo-review`.

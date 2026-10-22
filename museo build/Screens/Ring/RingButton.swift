@@ -177,6 +177,7 @@ private struct RingPillFace: View {
             if status.isSyncing { return "bringing in \(max(status.waiting, 1))" }
             if status.isRecordingOnRing { return "recording" }
             if status.needsAttention { return "nearly full" }
+            if status.firmwareIsBehind { return "update ready" }
             if status.isLowBattery { return "low battery" }
             return status.isCharging ? "charging" : "linked"
         }
@@ -242,7 +243,8 @@ extension RingStatus {
             fill: glyphFill,
             style: glyphStyle,
             count: glyphCount,
-            attention: needsAttention,
+            // A firmware update waiting gets the same "!" as something to fix.
+            attention: needsAttention || firmwareIsBehind,
             breathing: link == .linked && isLive,
             size: size
         )

@@ -129,7 +129,7 @@ struct HomeStatusLine: View {
                     .foregroundStyle(MuseColor.ink70)
                     .lineLimit(2)
                     .contentTransition(.opacity)
-                if asksForSetUp || asksForRoom {
+                if asksForSetUp || asksForRoom || Self.asksForUpdate(status) {
                     Image(systemName: "chevron.right")
                         .museSymbol(11, weight: .semibold)
                         .foregroundStyle(MuseColor.ink55)
@@ -160,6 +160,7 @@ struct HomeStatusLine: View {
         let asksForRoom = status.room != nil && !status.isSyncing
         if asksForSetUp { return "set up your ring to begin" }
         if asksForRoom, let storage = status.storageLine { return "ring \(storage)" }
+        if asksForUpdate(status) { return "new firmware for your ring" }
         guard besideIsland else { return status.shortLine }
         guard !status.isFirmwareUpdating else { return nil }
         switch status.link {
@@ -167,6 +168,13 @@ struct HomeStatusLine: View {
         case .bluetoothOff: return status.deviceLine
         case .notSetUp, .joining, .linked: return nil
         }
+    }
+
+    /// Linked, idle, and on older firmware than the kit carries: the ring sheet has the
+    /// update.
+    static func asksForUpdate(_ status: RingStatus) -> Bool {
+        status.isLinked && status.firmwareIsBehind && !status.isLive && !status.isSyncing
+            && !status.isRecordingOnRing
     }
 
     private var dotColor: Color {

@@ -7,7 +7,8 @@ import MuseoKit
 /// At rest it's a small ring and the battery ("82%"). When something happens it grows to
 /// say it: a counting clock on moss while you hold, "recording" with the ring's amber
 /// light, "bringing in 3" with the capsule filling softly as they come in, "nearly full" in
-/// clay. The width animates with the status (`RingButton` animates on it).
+/// clay, and "update" with an exclamation point when the ring runs older firmware than the
+/// kit carries. The width animates with the status (`RingButton` animates on it).
 ///
 /// It reads only `RingStatus`. The symbols are SF Symbols, so their motion (the waveform,
 /// the pulse) follows the system and Reduce Motion.
@@ -150,6 +151,12 @@ private extension RingIslandFace {
                 symbolColor = MuseColor.clay
                 words = "nearly full"
                 wordsColor = MuseColor.clay
+            } else if status.firmwareIsBehind {
+                // Not clay: nothing is lost by waiting, it's just ready.
+                symbol = "exclamationmark.circle.fill"
+                symbolColor = MuseColor.moss600
+                words = "update"
+                wordsColor = MuseColor.ink
             } else if status.isLowBattery {
                 symbolColor = MuseColor.clay
                 words = battery
