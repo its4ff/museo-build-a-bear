@@ -57,7 +57,7 @@ struct RingSummary: View {
 }
 ```
 
-`RingStatus` fields: `link` (`.notSetUp`, `.bluetoothOff`, `.joining`, `.away`, `.linked`), `name`, `advertisedName` ("Museo_47cf"), `battery` (5% steps), `isCharging`, `batteryIsStale`, `batteryReadAt`, `isLive`, `liveSince`, `isRecordingOnRing`, `isSyncing`, `syncProgress`, `waiting`, `freeStoragePercent`, `autoSync`, `autoClear`, `syncError`, `usesAccessorySetup`, `isFirmwareUpdating`, `firmwareVersion`, `userDisconnected`, `isSettingUp`, `setupNote`, `canRename`.
+`RingStatus` fields: `link` (`.notSetUp`, `.bluetoothOff`, `.joining`, `.away`, `.linked`), `name`, `advertisedName` ("Museo_47cf"), `battery` (the ring's exact percent), `isCharging`, `batteryIsStale`, `batteryReadAt`, `isLive`, `liveSince`, `isRecordingOnRing`, `isSyncing`, `syncProgress`, `waiting`, `freeStoragePercent`, `autoSync`, `autoClear`, `syncError`, `usesAccessorySetup`, `isFirmwareUpdating`, `firmwareVersion`, `userDisconnected`, `isSettingUp`, `setupNote`, `canRename`.
 
 Derived: `isLinked`, `needsAttention`, `isLowBattery`, `isStorageLow`, `minutesLeft`, `firmwareIsBehind`. Memory recording is `isRecordingOnRing && !isLive` (the ring also reports recording while streaming).
 
@@ -70,7 +70,7 @@ Fixtures for previews and the lab: `.notSetUp`, `.joining`, `.linked`, `.linkedL
 - **From any screen:** open the ring sheet. `@Environment(AppRouter.self) private var router`, then `router.open(.ring)`. Firmware is `router.open(.firmware)`.
 - **In a view that needs a command:** take `RingActions` as a parameter, like `RingSheet(status:actions:events:)`. `App/RootView.swift` builds the live one with `RingActions.live(openFirmware:)`; previews and lab pass `.preview`.
 - **In your code:** `Museo.onEvent { event in … }` to react. To act, use `RingActions.live(openFirmware:)`'s closures.
-- **Firmware version:** `status.firmwareVersion` ("1.64", read on every connect) and `status.firmwareIsBehind` (older than `BundledFirmware.imageVersion`). The island says "update" with an exclamation point, the home line says "new firmware for your ring", and the ring sheet's firmware row says "new firmware is ready".
+- **Firmware version:** `status.firmwareVersion` ("1.67", read on every connect) and `status.firmwareIsBehind` (older than `BundledFirmware.imageVersion`). The island says "update" with an exclamation point, the home line says "new firmware for your ring", and the ring sheet's firmware row says "new firmware is ready".
 - **Not available yet** (kit work): the updater refusing to resend or downgrade an image, remapping click and three clicks, recording sound (the firmware's noise reduction and AGC changed nothing in testing; the kit keeps noise reduction at 0). Never add a bitrate control: it's always 24 kbps. Say so and stop rather than reaching for bluetooth.
 
 ## The ring screens

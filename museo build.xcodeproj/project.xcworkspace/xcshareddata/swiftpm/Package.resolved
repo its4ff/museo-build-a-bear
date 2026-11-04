@@ -51,8 +51,8 @@
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/its4ff/museo-kit.git",
       "state" : {
-        "revision" : "c6fe4915eb8f4ddee787f1054137cde0ab482ff1",
-        "version" : "0.3.0"
+        "revision" : "d58a6ca8517bbe2f3fb629e660978fda16a95c47",
+        "version" : "0.3.2"
       }
     },
     {

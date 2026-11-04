@@ -67,7 +67,7 @@ Other lights (too far to stream, linked) aren't confirmed by the firmware yet. L
 All through `MuseoKit`:
 
 - **Status:** `RingModel.status`, one value for screens: linked or not, battery, charging, streaming, recording to memory, syncing, recordings waiting, storage. It comes with ready-made lowercase lines (`shortLine`, `headline`, `batteryLine`, `storageLine`, `accessibilityLabel`).
-- **Battery:** 0 to 100 in steps of 5, `isCharging`, and `isLowBattery` at 20% or less.
+- **Battery:** 0 to 100, the ring's own reading, `isCharging`, and `isLowBattery` at 20% or less.
 - **Sync:** recordings come in on their own. `RingActions` also has `syncNow`, `setAutoSync`, `setAutoClear` and `clearStorage` (confirm first: it can't be undone).
 - **Events:** `Museo.onEvent { … }` or `Museo.events()`, for when a hold starts or ends and when a sync runs.
 - **Live audio:** `Museo.liveAudio()`, a hold's audio as it arrives (16 kHz mono, about every 100 ms). museo build turns it into words on screen as you speak (`LiveWords`), on this iphone.
@@ -89,9 +89,9 @@ struct RingBattery: View {
 
 Two things to know today:
 - Tapping "disconnect" in the ring sheet also stops a memory recording in progress.
-- The bundled firmware is 10.14. From 10.14 on, the ring calls itself `Museo_47cf` (before, `Muse_47cf`).
+- The bundled firmware is 10.26. From 10.14 on, the ring calls itself `Museo_47cf` (before, `Muse_47cf`).
 - Setup finds rings with "Muse" in the name, so both `Museo_47cf` and older `Muse_47cf` rings show in the sheet.
-- The kit can't read the ring's version yet, so it can't tell whether a ring already runs 10.14.
+- The kit reads the ring's version on every connect, but the updater still sends the image to a ring that already runs it.
 
 ## what could open up later
 

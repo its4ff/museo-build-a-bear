@@ -518,8 +518,8 @@ struct RingSheet: View {
         }
     }
 
-    /// "new firmware is ready · 10.14" when the ring runs older firmware, "up to date ·
-    /// 10.14" once it reports the bundled image, "bundled 10.14" before it has said.
+    /// "new firmware is ready · 10.26" when the ring runs older firmware, "up to date ·
+    /// 10.26" once it reports the bundled image, "bundled 10.26" before it has said.
     private var firmwareMeta: String {
         if status.isFirmwareUpdating { return "updating now · keep it close" }
         if status.firmwareIsBehind { return "new firmware is ready · \(BundledFirmware.version)" }
