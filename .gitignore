@@ -24,3 +24,6 @@ lab-shots/
 
 # your own museo kit checkout (scripts/local-kit.sh)
 museo build local.xcworkspace/
+
+# museo for mac (experiment): scripts/mac.sh builds here
+mac/build/

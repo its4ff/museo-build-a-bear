@@ -1,5 +1,4 @@
 import SwiftUI
-import UIKit
 
 // The page and everything that sits on it. One table (`MuseStock`) decides fill, hairline
 // and lift for every surface, so a card here is a card everywhere.
@@ -39,8 +38,9 @@ nonisolated enum MuseGrain {
                 pixels[i + 2] = g
             }
         }
-        let image: UIImage? = pixels.withUnsafeMutableBytes { raw in
-            guard let context = CGContext(
+        // A CGImage straight into `Image`, no UIKit, so museo for mac draws the same paper.
+        let cgImage: CGImage? = pixels.withUnsafeMutableBytes { raw in
+            CGContext(
                 data: raw.baseAddress,
                 width: size,
                 height: size,
@@ -48,10 +48,10 @@ nonisolated enum MuseGrain {
                 bytesPerRow: size * 4,
                 space: CGColorSpaceCreateDeviceRGB(),
                 bitmapInfo: CGImageAlphaInfo.premultipliedLast.rawValue
-            ), let cgImage = context.makeImage() else { return nil }
-            return UIImage(cgImage: cgImage, scale: 3, orientation: .up)
+            )?.makeImage()
         }
-        return Image(uiImage: image ?? UIImage())
+        guard let cgImage else { return Image(size: CGSize(width: 1, height: 1)) { _ in } }
+        return Image(decorative: cgImage, scale: 3)
     }
 
     /// 40% white-noise grain plus 60% of three octaves (8, 16, 32; amplitude x0.56) sampled

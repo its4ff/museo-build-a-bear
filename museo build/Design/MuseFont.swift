@@ -1,6 +1,15 @@
 import CoreText
 import SwiftUI
+#if canImport(UIKit)
 import UIKit
+
+/// UIKit's font here, AppKit's on a mac (museo for mac compiles this file too).
+private typealias PlatformFont = UIFont
+#else
+import AppKit
+
+private typealias PlatformFont = NSFont
+#endif
 
 // Lora speaks: anything that came out of someone's mouth (their words, titles, hints).
 // Satoshi labels: anything the app says about itself (buttons, times, counts, nav).
@@ -82,7 +91,11 @@ nonisolated enum MuseFont {
     /// and only for symbols, never words. Screens never size a symbol with the system font
     /// directly.
     static func symbol(_ size: CGFloat, weight: Font.Weight = .medium) -> Font {
+        #if canImport(UIKit)
         Font(UIFont.systemFont(ofSize: size, weight: uiWeight(weight)))
+        #else
+        Font(NSFont.systemFont(ofSize: size, weight: uiWeight(weight)) as CTFont)
+        #endif
     }
 
     /// SF Mono for code and raw values (snippets, the ring console). Scales with Dynamic Type.
@@ -110,7 +123,7 @@ nonisolated enum MuseFont {
         var table: [Face: String] = [:]
         for face in Face.allCases {
             let candidates = [face.rawValue] + face.fallbacks
-            if let hit = candidates.first(where: { UIFont(name: $0, size: 12) != nil }) {
+            if let hit = candidates.first(where: { PlatformFont(name: $0, size: 12) != nil }) {
                 table[face] = hit
             }
         }
@@ -120,18 +133,18 @@ nonisolated enum MuseFont {
     /// `MuseoBuildApp.init` registers Lora and Satoshi. Previews skip `App.init`, so check
     /// here too, then add the static Lora italic.
     private static func registerIfNeeded() {
-        if UIFont(name: Face.loraRegular.rawValue, size: 12) == nil
-            || UIFont(name: Face.satoshiRegular.rawValue, size: 12) == nil {
+        if PlatformFont(name: Face.loraRegular.rawValue, size: 12) == nil
+            || PlatformFont(name: Face.satoshiRegular.rawValue, size: 12) == nil {
             FontRegistrar.registerBundledFonts()
         }
-        if UIFont(name: Face.loraItalic.rawValue, size: 12) == nil,
+        if PlatformFont(name: Face.loraItalic.rawValue, size: 12) == nil,
            let url = Bundle.main.url(forResource: "Lora-Italic", withExtension: "ttf") {
             CTFontManagerRegisterFontsForURL(url as CFURL, .process, nil)
         }
     }
 
     /// SwiftUI weight to UIKit weight, for `symbol(_:weight:)`.
-    private static func uiWeight(_ weight: Font.Weight) -> UIFont.Weight {
+    private static func uiWeight(_ weight: Font.Weight) -> PlatformFont.Weight {
         switch weight {
         case .ultraLight: .ultraLight
         case .thin: .thin
