@@ -34,6 +34,13 @@ final class MenuIsland {
     /// What the words so far would do when you let go: run a command, or be sent. Nil for
     /// plain words.
     private(set) var cue: VoiceCommands.Reading?
+    /// A command that just ran: its pill stays, with the tick, as the island closes.
+    private(set) var ran: VoiceCommands.Reading?
+
+    /// Apple's words while parakeet's are on the island: read together, the way the hold is
+    /// read when you let go, so the pill is the command that will run, as soon as either
+    /// recognizer hears it ("Open cloud" from one, "Open Claude." from the other).
+    @ObservationIgnored private var appleSaid: String?
 
     @ObservationIgnored private var closing: Task<Void, Never>?
 
@@ -43,6 +50,8 @@ final class MenuIsland {
         closing?.cancel()
         words = HoldSpeech.Words()
         cue = nil
+        ran = nil
+        appleSaid = nil
         note = nil
         mark = .voice
         inNote = NoteFocus.active != nil
@@ -52,18 +61,51 @@ final class MenuIsland {
         close(after: 120)
     }
 
-    func update(_ words: HoldSpeech.Words) {
+    /// The words on the island, and what they'd do. Parakeet's first words take the island
+    /// from apple's, which go on being read beside them (`hint`).
+    func update(_ words: HoldSpeech.Words, fromParakeet: Bool = false) {
         guard isListening else { return }
+        if fromParakeet, appleSaid == nil {
+            appleSaid = MacSpeech.joined(self.words.heard, self.words.hearing)
+        }
         self.words = words
-        let said = MacSpeech.joined(words.heard, words.hearing)
-        let reading = Dictation.shared.typesIntoApps ? VoiceCommands.shared.read(said) : .words(said)
+        refreshCue()
+    }
+
+    /// Apple's words while parakeet's are on the island: not shown, but a command they hear
+    /// raises its pill straight away.
+    func hint(_ words: HoldSpeech.Words) {
+        guard isListening else { return }
+        appleSaid = MacSpeech.joined(words.heard, words.hearing)
+        refreshCue()
+    }
+
+    private func refreshCue() {
+        let shown = MacSpeech.joined(words.heard, words.hearing)
+        guard Dictation.shared.typesIntoApps, !shown.isEmpty || appleSaid?.isEmpty == false else {
+            cue = nil
+            return
+        }
+        let commands = VoiceCommands.shared
+        let reading = if let appleSaid {
+            commands.read(apple: appleSaid, local: shown.isEmpty ? nil : shown)
+        } else {
+            commands.read(shown)
+        }
         if case .words = reading { cue = nil } else { cue = reading }
     }
 
     /// The hold's words landed (or didn't): say where for a moment, then close.
-    func finish(note: String?) {
+    /// A command that ran passes itself as `ran`: its pill stays, with the tick.
+    func finish(note: String?, ran: VoiceCommands.Reading? = nil) {
         isListening = false
         cue = nil
+        if let ran {
+            self.ran = ran
+            mark = .tick
+            close(after: 1.8)
+            return
+        }
         guard let note else {
             close(after: 0)
             return

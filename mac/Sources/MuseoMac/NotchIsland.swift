@@ -165,7 +165,8 @@ private struct NotchIslandView: View {
 
     /// A line drops below the notch only for words forming. Where they went fits in an ear.
     private var hasLine: Bool {
-        island.isListening && (!island.words.heard.isEmpty || !island.words.hearing.isEmpty)
+        if island.ran != nil { return true }
+        return island.isListening && (island.cue != nil || !island.words.heard.isEmpty || !island.words.hearing.isEmpty)
     }
 
     // MARK: - Contents
@@ -221,7 +222,7 @@ private struct NotchIslandView: View {
     /// return chip after them.
     @ViewBuilder
     private var line: some View {
-        switch island.cue {
+        switch island.cue ?? island.ran {
         case .command(let command, let said):
             HStack(spacing: MuseSpacing.xs) {
                 chip(VoiceCommands.label(command))
@@ -354,6 +355,11 @@ extension NotchIsland {
         island.update(HoldSpeech.Words(heard: "Hey Claude, what's a good name for a ring app?", hearing: ""))
         shot()
         island.finish(note: "typed into Claude")
+        shot()
+        // A command that ran: its pill stays, with the tick.
+        island.listen()
+        island.update(HoldSpeech.Words(heard: "Switch tab.", hearing: ""))
+        island.finish(note: nil, ran: VoiceCommands.shared.read("Switch tab."))
         shot()
         guard let first = shots.first,
               let context = CGContext(data: nil, width: first.width, height: first.height * shots.count, bitsPerComponent: 8, bytesPerRow: 0,

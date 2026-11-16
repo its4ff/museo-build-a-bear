@@ -25,6 +25,10 @@ final class Dictation {
 
     @ObservationIgnored private var listening: Task<Void, Never>?
     @ObservationIgnored private var speech: HoldSpeech?
+    /// The downloaded model hearing the hold as it goes, when there is one.
+    @ObservationIgnored private var parakeet: HoldParakeet?
+    /// Its words have reached the island this hold: apple's step aside.
+    @ObservationIgnored private var parakeetSpeaks = false
     @ObservationIgnored private var hold = 0
     /// Audio that arrived while the hold's recognizer was still starting, in order.
     @ObservationIgnored private var waiting: [LiveAudioChunk] = []
@@ -57,6 +61,14 @@ final class Dictation {
             hold += 1
             speech?.cancel()
             speech = nil
+            parakeet?.stop()
+            parakeetSpeaks = false
+            let hold = self.hold
+            parakeet = HoldParakeet.begin { [weak self] words in
+                guard let self, self.hold == hold else { return }
+                parakeetSpeaks = true
+                MenuIsland.shared.update(words, fromParakeet: true)
+            }
             waiting = []
             heard = []
             holdStarted = .now
@@ -70,12 +82,15 @@ final class Dictation {
         case .samples(let chunk):
             MenuVoice.shared.hear(chunk.samples)
             heard.append(contentsOf: chunk.samples)
+            parakeet?.feed(chunk.samples)
             if let speech {
                 speech.feed(chunk)
             } else if !hasNoRecognizer {
                 waiting.append(chunk)
             }
         case .ended:
+            parakeet?.stop()
+            parakeet = nil
             if let speech {
                 self.speech = nil
                 finish(speech, hold)
@@ -91,8 +106,14 @@ final class Dictation {
     private func start(_ hold: Int) {
         Task {
             let speech = await HoldSpeech.begin { words in
+                // Apple's words fill the first moment; once parakeet's arrive, they carry it,
+                // and apple's only raise a command's pill early.
                 guard self.hold == hold else { return }
-                MenuIsland.shared.update(words)
+                if self.parakeetSpeaks {
+                    MenuIsland.shared.hint(words)
+                } else {
+                    MenuIsland.shared.update(words)
+                }
             }
             guard let speech else {
                 if self.hold == hold {
@@ -124,8 +145,10 @@ final class Dictation {
         Task {
             // Apple's words settle first; a downloaded model then hears the whole hold again
             // and its words win. Either one alone is enough.
+            // Both at once: the model's pass doesn't wait for apple to settle.
+            let heardAgain = Task { await LocalSpeech.shared.words(of: audio) }
             let apple = YourWords.shared.respell(await speech?.finish() ?? "")
-            let local = await LocalSpeech.shared.words(of: audio).map(YourWords.shared.respell)
+            let local = await heardAgain.value.map(YourWords.shared.respell)
             let words = local ?? apple
             guard !words.isEmpty else {
                 MenuIsland.shared.finish(note: speech == nil && local == nil ? "getting the speech model" : nil)
@@ -166,7 +189,11 @@ final class Dictation {
                     MacLibrary.shared.forgetCommandHold(startedAt: started)
                     CommandTally.shared.add(command.say.first ?? said)
                 }
-                MenuIsland.shared.finish(note: ran ? "\(said) · \(VoiceCommands.label(command))" : "couldn't \(said)")
+                if ran {
+                    MenuIsland.shared.finish(note: nil, ran: .command(command, said: said))
+                } else {
+                    MenuIsland.shared.finish(note: "couldn't \(said)")
+                }
                 print("[museo][command] hold \(hold): \"\(said)\" \(ran ? "ran" : "couldn't run")")
             case .ask(let agent, let text, let send):
                 if await AgentHandoff.hand(text, to: agent, send: send) {

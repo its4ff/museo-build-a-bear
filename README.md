@@ -71,7 +71,7 @@ museo shows up in the menu bar. set up your ring from the panel, then let it use
 
 - **voice commands:** end a hold with "send" to press return. "new line", "switch tab", "undo", "open claude" and more, each one yours to edit or add to.
 - **talk to your agents:** "hey claude…" or "hey cursor…" opens a new chat with what you said.
-- **speech on this mac:** apple dictation out of the box, or parakeet ultra on the neural engine, downloaded once from the panel. audio and words stay on your mac, except where you type them.
+- **speech on this mac:** apple dictation out of the box, or parakeet ultra on the neural engine, downloaded once from the panel. with parakeet, its words form under the notch while you hold. audio and words stay on your mac, except where you type them.
 - **your iphone and your mac, one ring:** the mac brings in only what you record after it first sees the ring, newest first, so the iphone keeps its own. the panel brings in the older ones when you ask.
 
 ## museo for iphone

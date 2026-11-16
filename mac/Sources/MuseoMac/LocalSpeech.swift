@@ -6,9 +6,10 @@ import Observation
 /// the panel into ~/Library/Application Support/museo mac/models.
 ///
 /// The download is the model's files from Hugging Face; nothing is sent back. Audio and words
-/// stay on this mac. A hold still shows apple dictation's words on the island while you talk
-/// (they form as you speak); when you let go, the chosen model hears the whole hold again and
-/// its words are the ones typed. Memory recordings go through it too.
+/// stay on this mac. While you hold, the chosen model hears the hold again every moment or so
+/// (`HoldParakeet`), and the island shows its words; apple dictation fills only the first
+/// moment. When you let go, it hears the whole hold once more, with your words, and those are
+/// the ones typed. Memory recordings go through it too.
 @MainActor
 @Observable
 final class LocalSpeech {
@@ -65,6 +66,9 @@ final class LocalSpeech {
     /// Your words, as a boosting session, and the words it was made for.
     @ObservationIgnored private var booster: (words: [String], session: VocabularyBoostingSession)?
     @ObservationIgnored private var ctcModels: CtcModels?
+    /// The pass running now: one at a time, so a hold's last pass never shares the model
+    /// with a pass from while you held.
+    @ObservationIgnored private var turn: Task<Void, Never>?
 
     private var folder: URL { MacLibrary.shared.folder.appendingPathComponent("models", isDirectory: true) }
 
@@ -168,9 +172,42 @@ final class LocalSpeech {
         }
     }
 
+    /// The chosen model is loaded and can hear a hold while it happens.
+    var canHearWhileHolding: Bool {
+        guard let kind = MacSpeech.model.local else { return false }
+        return loaded == kind && manager != nil
+    }
+
+    /// A quick pass while you hold: the model alone, without the check for your words, so it
+    /// keeps up. Nil when the model isn't loaded yet (it never waits for a load).
+    func quickWords(of samples: ArraySlice<Int16>) async -> String? {
+        guard canHearWhileHolding, let manager, let kind = loaded, !samples.isEmpty else { return nil }
+        let audio = samples.map { Float($0) / 32_768 }
+        return await inTurn {
+            var state = TdtDecoderState.make(decoderLayers: kind.version.decoderLayers)
+            let text = try? await manager.transcribe(audio, decoderState: &state).text
+            return text?.trimmingCharacters(in: .whitespacesAndNewlines)
+        }
+    }
+
+    /// Runs `work` after the pass before it.
+    private func inTurn<T>(_ work: @escaping () async -> T) async -> T {
+        let before = turn
+        let mine = Task { () -> T in
+            await before?.value
+            return await work()
+        }
+        turn = Task { _ = await mine.value }
+        return await mine.value
+    }
+
     /// 16 kHz audio to words, leaning toward your words.
     private func hear(_ audio: [Float]) async -> String? {
         guard let manager = await ready(), let kind = loaded else { return nil }
+        return await inTurn { await self.hear(audio, manager: manager, kind: kind) }
+    }
+
+    private func hear(_ audio: [Float], manager: AsrManager, kind: Kind) async -> String? {
         var state = TdtDecoderState.make(decoderLayers: kind.version.decoderLayers)
         let started = Date.now
         do {
