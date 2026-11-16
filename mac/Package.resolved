@@ -1,6 +1,15 @@
 {
-  "originHash" : "34f13db731ef4c6652c452f86c569d3f3335a6e424056e7994859efd1422cb84",
+  "originHash" : "980abb2257d124308e98a2233fdc62ed361b75ff19865eafbd7bf410b9c794cf",
   "pins" : [
+    {
+      "identity" : "fluidaudio",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/FluidInference/FluidAudio.git",
+      "state" : {
+        "revision" : "c8b41f98eae668794dd0083bbe028fe7e6585051",
+        "version" : "0.18.3"
+      }
+    },
     {
       "identity" : "ios-ble-library",
       "kind" : "remoteSourceControl",
@@ -35,6 +44,15 @@
       "state" : {
         "revision" : "0c211879e9e97ea756eaa76cd2182b610e6519b2",
         "version" : "1.14.6"
+      }
+    },
+    {
+      "identity" : "museo-kit",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/its4ff/museo-kit.git",
+      "state" : {
+        "revision" : "f4964a429f606b00396ebfa45ef161ba65cc5c0c",
+        "version" : "0.4.0"
       }
     },
     {

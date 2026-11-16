@@ -2,13 +2,15 @@
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
 <dict>
-	<key>CFBundleIdentifier</key>
-	<string>build.museo.mac</string>
-	<key>CFBundleName</key>
-	<string>museo</string>
 	<key>CFBundleDisplayName</key>
 	<string>museo</string>
 	<key>CFBundleExecutable</key>
+	<string>museo</string>
+	<key>CFBundleIconFile</key>
+	<string>AppIcon</string>
+	<key>CFBundleIdentifier</key>
+	<string>build.museo.mac</string>
+	<key>CFBundleName</key>
 	<string>museo</string>
 	<key>CFBundlePackageType</key>
 	<string>APPL</string>
@@ -22,9 +24,9 @@
 	<true/>
 	<key>NSBluetoothAlwaysUsageDescription</key>
 	<string>museo uses bluetooth to link your ring.</string>
-	<key>NSSpeechRecognitionUsageDescription</key>
-	<string>museo turns what you say to the ring into words, on this mac.</string>
 	<key>NSDocumentsFolderUsageDescription</key>
 	<string>museo keeps the ring's recordings here while they come in.</string>
+	<key>NSSpeechRecognitionUsageDescription</key>
+	<string>museo turns what you say to the ring into words, on this mac.</string>
 </dict>
 </plist>

@@ -42,6 +42,8 @@ final class HoldSpeech {
             modules: [module],
             options: SpeechAnalyzer.Options(priority: .userInitiated, modelRetention: .lingering)
         )
+        // Your words, as hints: apple's recognizer leans toward them too.
+        try? await analyzer.setContext(YourWords.shared.appleContext)
         do {
             try await analyzer.start(inputSequence: stream)
         } catch {
@@ -51,8 +53,8 @@ final class HoldSpeech {
         speech.results = Task {
             var words = Words()
             do {
-                for try await result in module.results {
-                    let piece = String(result.text.characters)
+                for try await result in MacSpeech.results(of: module) {
+                    let piece = result.text
                     if result.isFinal {
                         words.heard = MacSpeech.joined(words.heard, piece)
                         words.hearing = ""
@@ -62,9 +64,12 @@ final class HoldSpeech {
                     onWords(words)
                 }
             } catch {
-                // Cancelled, or the recognizer gave up: keep what it settled on.
+                // Cancelled, or the recognizer gave up: keep what it had.
             }
-            return words.heard
+            // The hold is over, so words still forming are as settled as they'll get. Apple
+            // dictation can end with its last stretch never marked final; without this, those
+            // holds showed words in the island and typed nothing.
+            return MacSpeech.joined(words.heard, words.hearing)
         }
         return speech
     }

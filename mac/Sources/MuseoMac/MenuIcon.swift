@@ -5,20 +5,23 @@ import SwiftUI
 /// The menu bar icon: the museo ring as print (`DotRingCells`), in color by state.
 ///
 /// - not linked: faint ink, the menu bar's own color
-/// - linked: moss dots, lit like the orb; a tick for a second after words are typed; a square
-///   amber cell while recordings from the ring wait unseen
+/// - linked: the ring in the menu bar's ink; a tick for a second after words are typed.
+///   (Nothing for recordings waiting: the panel's ring row shows those when you open it.)
 /// - holding: a forest pill with the ring in linen and your voice in cells beside it
 /// - recording on the ring: the pill with the ring in amber and the time running
+/// - charging: the ring with a still bolt of cells in its opening, until it's full
 /// - bringing it in: moss dots filling amber, clockwise
 struct MenuIcon: View {
     private let voice = MenuVoice.shared
     private let watch = RingWatch.shared
-    private let library = MacLibrary.shared
+    @Environment(\.openWindow) private var openWindow
 
     var body: some View {
         let status = RingModel.shared.status
         Image(nsImage: DotRingIcon.image(for: state(status)))
             .accessibilityLabel(status.accessibilityLabel)
+            // Always on screen, so it lends the dock icon a way to open the library.
+            .onAppear { LibraryOpener.take(openWindow) }
     }
 
     private func state(_ status: RingStatus) -> DotRingIcon.State {
@@ -31,7 +34,8 @@ struct MenuIcon: View {
                 return .recording(watch.now.timeIntervalSince(since))
             }
             if status.isSyncing { return .syncing(status.syncProgress ?? 0) }
-            return .linked(typed: watch.typedFlash, waiting: library.unseenCount > 0)
+            if status.showsCharging, !watch.typedFlash { return .charging }
+            return .linked(typed: watch.typedFlash)
         }
     }
 }
@@ -41,33 +45,37 @@ struct MenuIcon: View {
 enum DotRingIcon {
     enum State {
         case faint
-        case linked(typed: Bool, waiting: Bool)
+        case linked(typed: Bool)
+        case charging
         case holding([Double])
         case recording(TimeInterval)
         case syncing(Double)
     }
+
 
     private static let height: CGFloat = 18
 
     static func image(for state: State) -> NSImage {
         switch state {
         case .faint:
-            let image = NSImage(size: NSSize(width: height, height: height), flipped: true) { _ in
-                guard let cg = NSGraphicsContext.current?.cgContext else { return false }
+            // Gray: the menu bar's own ink at 40%.
+            return template { cg in
                 fill(cells: DotRingCells.all, in: cg, at: .zero, scale: 1, colors: [NSColor.black.withAlphaComponent(0.4)])
-                return true
             }
-            image.isTemplate = true
-            return image
 
-        case .linked(let typed, let waiting):
-            return draw(width: height) { cg, dark in
-                fill(cells: DotRingCells.all, in: cg, at: .zero, scale: 1, colors: moss(dark))
-                if typed { fill(cells: tick, in: cg, at: .zero, scale: 1, colors: dark ? [NSColor(MuseColor.ground)] : moss(dark)) }
-                if waiting {
-                    cg.setFillColor(NSColor(MuseColor.ochre).cgColor)
-                    cg.fill(CGRect(x: 13.6, y: 0.4, width: 4, height: 4))
-                }
+        case .linked(let typed):
+            // Linked: a template at full strength, so macOS paints it solid white on a dark or
+            // tinted menu bar and solid black on a light one, like the icons beside it.
+            return template { cg in
+                fill(cells: DotRingCells.all, in: cg, at: .zero, scale: 1, colors: [.black])
+                if typed { fill(cells: tick, in: cg, at: .zero, scale: 1, colors: [.black]) }
+            }
+
+        case .charging:
+            // Like linked, a template, with the bolt where the tick goes.
+            return template { cg in
+                fill(cells: DotRingCells.all, in: cg, at: .zero, scale: 1, colors: [.black])
+                fill(cells: bolt, in: cg, at: .zero, scale: 1, colors: [.black])
             }
 
         case .holding(let levels):
@@ -92,13 +100,29 @@ enum DotRingIcon {
         case .syncing(let progress):
             let reach = max(0.08, min(1, progress)) * 360
             return draw(width: height) { cg, dark in
-                fill(cells: DotRingCells.all.filter { $0.angle > reach }, in: cg, at: .zero, scale: 1, colors: moss(dark))
+                fill(cells: DotRingCells.all.filter { $0.angle > reach }, in: cg, at: .zero, scale: 1, colors: [ink(dark)])
                 fill(cells: DotRingCells.all.filter { $0.angle <= reach }, in: cg, at: .zero, scale: 1, colors: amber)
             }
         }
     }
 
     // MARK: - Drawing
+
+    /// A template image: macOS colors it to match the menu bar (white, black, or tinted).
+    private static func template(_ paint: @escaping (CGContext) -> Void) -> NSImage {
+        let image = NSImage(size: NSSize(width: height, height: height), flipped: true) { _ in
+            guard let cg = NSGraphicsContext.current?.cgContext else { return false }
+            paint(cg)
+            return true
+        }
+        image.isTemplate = true
+        return image
+    }
+
+    /// The menu bar's own ink, for full-color states: white on dark, near black on light.
+    private static func ink(_ dark: Bool) -> NSColor {
+        dark ? .white : NSColor.black.withAlphaComponent(0.85)
+    }
 
     /// A full-color image `width` points wide, drawn with the menu bar's appearance.
     private static func draw(width: CGFloat, _ paint: @escaping (CGContext, Bool) -> Void) -> NSImage {
@@ -172,6 +196,37 @@ enum DotRingIcon {
         }
     }
 
+    // MARK: - The notch island's ring
+
+    enum Look { case linen, tick, amber, moss, charging, faint }
+
+    /// The ring small: linen, tick and amber for the notch island's left ear (on black),
+    /// moss and faint for the panel (on paper).
+    static func small(_ look: Look, size: CGFloat = 16) -> NSImage {
+        let image = NSImage(size: NSSize(width: size, height: size), flipped: true) { _ in
+            guard let cg = NSGraphicsContext.current?.cgContext else { return false }
+            let scale = size / DotRingCells.size
+            switch look {
+            case .linen:
+                fill(cells: DotRingCells.all, in: cg, at: .zero, scale: scale, colors: [NSColor(MuseColor.ground)])
+            case .tick:
+                fill(cells: DotRingCells.all, in: cg, at: .zero, scale: scale, colors: [NSColor(MuseColor.ground)])
+                fill(cells: tick, in: cg, at: .zero, scale: scale, colors: [NSColor(MuseColor.orbHighlight)])
+            case .amber:
+                fill(cells: DotRingCells.all, in: cg, at: .zero, scale: scale, colors: amber)
+            case .moss:
+                fill(cells: DotRingCells.all, in: cg, at: .zero, scale: scale, colors: moss(false))
+            case .charging:
+                fill(cells: DotRingCells.all + bolt, in: cg, at: .zero, scale: scale, colors: moss(false))
+            case .faint:
+                fill(cells: DotRingCells.all, in: cg, at: .zero, scale: scale, colors: [NSColor(MuseColor.ink55).withAlphaComponent(0.5)])
+            }
+            return true
+        }
+        image.isTemplate = false
+        return image
+    }
+
     // MARK: - Colors and marks
 
     private static func moss(_ dark: Bool) -> [NSColor] {
@@ -186,4 +241,19 @@ enum DotRingIcon {
     private static let tick: [Cell] = [
         (6.1, 9.1), (7.3, 10.3), (8.5, 11.5), (9.7, 10.3), (10.9, 9.1), (12.1, 7.9), (13.3, 6.7),
     ].map { Cell(x: $0.0, y: $0.1, side: 0.95, angle: 0) }
+
+    /// A bolt of cells in the ring's opening, two wide so it reads at 18 points: down to the
+    /// left, across, and down to the left again.
+    private static let bolt: [Cell] = [
+        (6, [10, 11]), (7, [9, 10]), (8, [8, 9]), (9, [7, 8, 9, 10, 11]), (10, [9, 10]), (11, [8, 9]), (12, [7, 8]),
+    ].flatMap { row, columns in
+        columns.map { Cell(x: CGFloat($0), y: CGFloat(row), side: 0.86, angle: 0) }
+    }
+}
+
+extension RingStatus {
+    /// On the charger and not full yet: the bolt shows. Full on the charger reads as linked.
+    var showsCharging: Bool {
+        isLinked && isCharging && (battery ?? 0) < 100
+    }
 }

@@ -214,6 +214,14 @@ museo build adds:
   - `scripts/lab.sh index` opens every mock screen.
 - **Done means:** zero errors, zero new warnings in your files, the review checks clean, and screenshots that look right. Capture, sync, transcription and the on-device model's notes need a device.
 
+## museo for mac
+
+- `mac/` is a menu bar app (a Swift package, macOS 26) on the same kit, pinned in `mac/Package.swift`, under the same rules: the ring is sealed, the voice, tokens only, what stays on the device.
+- Its `Design/` files and `Engine/Loudness.swift` are symlinks into `museo build/`, so a change there changes both apps.
+- `scripts/mac.sh` builds, signs and opens it (`scripts/mac.sh build` only builds, `scripts/mac.sh log` follows it).
+- DEBUG renders: `mac/.build/debug/MuseoMac -renderScreens <folder>`. The README's pictures come from `-renderReadme <folder>`, drawn from made-up muses so nobody's own words reach the repo.
+- Kit work: `swift package --package-path mac edit museo-kit --path ../museo-kit`, and `unedit museo-kit` to go back.
+
 ## Privacy and trust
 
 - Transcription, titles, notes and search run on this iphone. The model is Apple's, on device (`MuseAI`), no key. Desert Ant's usage counts are the only thing that leaves (rule 5).

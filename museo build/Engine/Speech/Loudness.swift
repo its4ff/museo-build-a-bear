@@ -16,8 +16,9 @@ nonisolated enum Loudness {
     /// Never quieter than this.
     static let minGainDB = -9.0
     /// Never louder than this. Players limit peaks after the gain, and lifting a clean
-    /// but quiet recording doesn't change how it sounds otherwise.
-    static let maxBoostDB = 18.0
+    /// but quiet recording doesn't change how it sounds otherwise. The ring records low:
+    /// spoken muses measure about -30 to -39 LUFS (nov 2026), so 18 left many of them quiet.
+    static let maxBoostDB = 26.0
 
     private struct Key: Hashable {
         let path: String

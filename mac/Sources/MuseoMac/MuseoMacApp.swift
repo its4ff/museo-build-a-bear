@@ -27,8 +27,19 @@ struct MuseoMacApp: App {
         Window("museo", id: LibraryWindow.id) {
             LibraryWindow()
         }
-        .defaultSize(width: 980, height: 680)
-        .windowToolbarStyle(.unified(showsTitle: false))
+        .defaultSize(width: 1080, height: 720)
+        .windowStyle(.hiddenTitleBar)
+        .commands { NoteCommands() }
+
+        // A museo note, the library's size. Opened by the plus, ⌘N, or a note in the library.
+        WindowGroup("note", id: NoteWindow.id, for: UUID.self) { $id in
+            NoteWindow(id: id)
+        } defaultValue: {
+            UUID()
+        }
+        .defaultSize(width: 1080, height: 720)
+        .windowStyle(.hiddenTitleBar)
+        .restorationBehavior(.disabled)
     }
 }
 
@@ -41,31 +52,67 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             IconSheet.write(to: URL(fileURLWithPath: folder))
             exit(0)
         }
+        if let kind = UserDefaults.standard.string(forKey: "speechCheck").flatMap(LocalSpeech.Kind.init(rawValue:)) {
+            Task {
+                await SpeechCheck.run(kind)
+                exit(0)
+            }
+            return
+        }
+        if let folder = UserDefaults.standard.string(forKey: "renderCommandOptions") {
+            CommandsOptions.write(to: URL(fileURLWithPath: folder))
+            exit(0)
+        }
+        if let folder = UserDefaults.standard.string(forKey: "renderReadme") {
+            ReadmeShots.write(to: URL(fileURLWithPath: folder))
+            exit(0)
+        }
+        if let folder = UserDefaults.standard.string(forKey: "renderScreens") {
+            ScreenSheet.write(to: URL(fileURLWithPath: folder))
+            exit(0)
+        }
         #endif
-        // Once, before anything reads the ring.
-        Museo.start(name: "museo")
+        // Once, before anything reads the ring. Newest recordings come over first, so a
+        // fresh one can land where you are while older ones follow. And only recordings
+        // made after this mac first saw the ring: the ones before are the iphone's, and
+        // stay on the ring (the panel's ring menu brings them in when asked).
+        let ring = Museo.start(name: "museo")
+        ring.syncsNewestFirst = true
+        ring.bringsInOnlyNewRecordings = true
         MacLibrary.shared.start()
         Dictation.shared.start()
         RingWatch.shared.start()
+        NotchIsland.shared.start()
         HotKeys.start()
         Task { await MacSpeech.prepare() }
         // Each hold's pill starts and ends at rest.
         Museo.onEvent { event in
             switch event {
-            case .liveStarted, .liveEnded: MenuVoice.shared.reset()
+            case .liveStarted:
+                MenuVoice.shared.reset()
+            case .liveEnded:
+                MenuVoice.shared.reset()
             default: break
             }
         }
-        // Memory recordings come over by themselves, so a fresh one can land where you are.
-        // (The first experiment turned this off; turn it back on once.)
-        if !UserDefaults.standard.bool(forKey: Self.didTurnOnAutoSync) {
-            RingActions.live(openFirmware: {}).setAutoSync(true)
-            UserDefaults.standard.set(true, forKey: Self.didTurnOnAutoSync)
+        // Nothing comes over by itself on a mac: a transfer ties up the ring, and on a mac's
+        // slow link a hold would wait behind it. The panel's row brings recordings in when
+        // you click, and the iphone keeps bringing them in on its own.
+        RingActions.live(openFirmware: {}).setAutoSync(false)
+        // Opened from the dock or Finder: the library, like any app. From login items, or
+        // relaunched by scripts/mac.sh (-quietLaunch): just the menu bar.
+        if !LibraryOpener.launchedAtLogin, !UserDefaults.standard.bool(forKey: "quietLaunch") {
+            LibraryOpener.open()
         }
+    }
+
+    /// A click on museo's dock icon opens the library, or brings it forward. (The notch island
+    /// is always a visible window, so `hasVisibleWindows` says nothing here.)
+    func applicationShouldHandleReopen(_ sender: NSApplication, hasVisibleWindows: Bool) -> Bool {
+        LibraryOpener.open()
+        return false
     }
 
     /// Closing the library leaves museo in the menu bar.
     func applicationShouldTerminateAfterLastWindowClosed(_ sender: NSApplication) -> Bool { false }
-
-    private static let didTurnOnAutoSync = "museo.mac.didTurnOnAutoSync"
 }

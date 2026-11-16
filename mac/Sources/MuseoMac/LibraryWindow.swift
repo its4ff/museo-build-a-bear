@@ -11,29 +11,42 @@ struct LibraryWindow: View {
 
     var body: some View {
         NavigationSplitView {
-            LibrarySidebar(muses: found, filter: $filter, selection: $library.selection)
-                .navigationSplitViewColumnWidth(min: 260, ideal: 300, max: 380)
+            LibrarySidebar(muses: found, query: $query, filter: $filter, selection: $library.selection, picked: $library.picked)
+                .navigationSplitViewColumnWidth(min: 270, ideal: 310, max: 380)
+                .toolbar(removing: .sidebarToggle)
         } detail: {
-            if let muse = library.muses.first(where: { $0.id == library.selection }) {
-                MusePane(muse: muse)
-                    .id(muse.id)
+            if library.showsStats {
+                StatsPane()
+            } else if library.picked.count > 1 {
+                MusesPickedPane(ids: library.picked)
+            } else if let muse = library.muses.first(where: { $0.id == library.selection }) {
+                if muse.isNote {
+                    NotePane(note: muse)
+                        .id(muse.id)
+                } else {
+                    MusePane(muse: muse)
+                        .id(muse.id)
+                }
             } else {
                 LibraryEmpty(hasMuses: !library.muses.isEmpty)
             }
         }
-        .searchable(text: $query, placement: .sidebar, prompt: "search everything you've said")
         .tint(MuseColor.moss)
         // museo is paper: light only, whatever the mac is set to.
         .preferredColorScheme(.light)
         .onAppear {
             if library.selection == nil { library.selection = library.muses.first?.id }
             // A dock icon while the library is open, so it can be found with ⌘Tab.
-            NSApp.setActivationPolicy(.regular)
+            DockPresence.opened()
         }
-        .onDisappear { NSApp.setActivationPolicy(.accessory) }
+        .onDisappear { DockPresence.closed() }
         .onChange(of: library.selection, initial: true) { _, id in
             if let id { library.markSeen(id) }
+            library.showsStats = false
         }
+        // Picks hold only what's shown: a new search or filter lets them go.
+        .onChange(of: query) { library.picked = [] }
+        .onChange(of: filter) { library.picked = [] }
     }
 
     /// The muses in this filter whose words hold every word typed in the search.

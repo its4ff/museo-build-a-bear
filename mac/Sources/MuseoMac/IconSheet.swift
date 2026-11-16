@@ -7,29 +7,28 @@ enum IconSheet {
     static func write(to folder: URL) {
         let states: [(String, DotRingIcon.State)] = [
             ("not linked", .faint),
-            ("linked", .linked(typed: false, waiting: false)),
+            ("linked", .linked(typed: false)),
             ("holding", .holding([0.2, 0.6, 0.35, 0.9, 0.4])),
-            ("typed", .linked(typed: true, waiting: false)),
+            ("typed", .linked(typed: true)),
             ("recording", .recording(42)),
             ("bringing in", .syncing(0.64)),
-            ("waiting", .linked(typed: false, waiting: true)),
         ]
         let row: CGFloat = 96
-        let size = NSSize(width: 760, height: row * CGFloat(states.count))
+        let size = NSSize(width: 1240, height: row * CGFloat(states.count))
         let sheet = NSImage(size: size, flipped: true) { _ in
             for (index, entry) in states.enumerated() {
                 let y = CGFloat(index) * row
                 for (column, dark) in [false, true].enumerated() {
-                    let x = CGFloat(column) * 380
+                    let x = CGFloat(column) * 620
                     (dark ? NSColor(white: 0.15, alpha: 1) : NSColor(white: 0.9, alpha: 1)).setFill()
-                    NSRect(x: x, y: y, width: 380, height: row).fill()
+                    NSRect(x: x, y: y, width: 620, height: row).fill()
                     NSAppearance(named: dark ? .darkAqua : .aqua)?.performAsCurrentDrawingAppearance {
                         let icon = DotRingIcon.image(for: entry.1)
                         let tinted = icon.isTemplate ? tint(icon, dark ? .white : .black) : icon
                         tinted.draw(in: NSRect(x: x + 24, y: y + 39, width: icon.size.width, height: icon.size.height))
                         tinted.draw(in: NSRect(x: x + 90, y: y + 12, width: icon.size.width * 4, height: icon.size.height * 4))
                     }
-                    (entry.0 as NSString).draw(at: NSPoint(x: x + 260, y: y + 40), withAttributes: [.foregroundColor: dark ? NSColor.white : NSColor.black])
+                    (entry.0 as NSString).draw(at: NSPoint(x: x + 470, y: y + 40), withAttributes: [.foregroundColor: dark ? NSColor.white : NSColor.black])
                 }
             }
             return true

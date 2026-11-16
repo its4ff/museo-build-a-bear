@@ -4,8 +4,7 @@ import MuseoKit
 import Observation
 
 /// What the menu bar needs to know about the ring beyond its status: when a memory recording
-/// started (for the timer), which app was in front then (for the fresh rule), and a short
-/// tick after words are typed.
+/// started (for the timer), and a short tick after words are typed.
 @MainActor
 @Observable
 final class RingWatch {
@@ -17,14 +16,14 @@ final class RingWatch {
     private(set) var now = Date()
     /// True for a moment after words are typed.
     private(set) var typedFlash = false
+    /// The ring was forgotten here, and nothing has linked since. macOS keeps its own pairing
+    /// (the ring is also its media keys), so the panel points to system settings to unpair.
+    private(set) var forgotRing = UserDefaults.standard.bool(forKey: RingWatch.forgotKey)
 
-    /// The last memory recording that ended on this mac: when, and which app was in front
-    /// when it began. `MacLibrary` takes it once, for the next recording that comes over.
-    @ObservationIgnored private(set) var lastRecording: (stopped: Date, app: String?)?
-
-    @ObservationIgnored private var appAtStart: String?
     @ObservationIgnored private var ticker: Task<Void, Never>?
     @ObservationIgnored private var flashing: Task<Void, Never>?
+    @ObservationIgnored private var listing: Task<Void, Never>?
+    @ObservationIgnored private var wasLinked = false
 
     func start() {
         follow()
@@ -41,10 +40,18 @@ final class RingWatch {
         }
     }
 
-    /// Hands over the last recording's details once.
-    func takeLastRecording() -> (stopped: Date, app: String?)? {
-        defer { lastRecording = nil }
-        return lastRecording
+    /// Reads what's on the ring in a moment (battery, storage and its file list), so the
+    /// panel's row can say what's there. Only a list: on a mac nothing comes over unless you
+    /// click "bring in", since a transfer ties up the ring and a hold would wait behind it.
+    func listSoon(after seconds: Double = 2.5) {
+        listing?.cancel()
+        listing = Task {
+            try? await Task.sleep(for: .seconds(seconds))
+            guard !Task.isCancelled else { return }
+            let status = RingModel.shared.status
+            guard status.isLinked, !status.isSyncing, !status.isLive, !status.isRecordingOnRing else { return }
+            RingActions.live(openFirmware: {}).refresh()
+        }
     }
 
     // MARK: - Following the ring
@@ -52,12 +59,40 @@ final class RingWatch {
     private func follow() {
         withObservationTracking {
             _ = RingModel.shared.status.isRecordingOnRing
+            _ = RingModel.shared.status.link
         } onChange: {
             Task { @MainActor in
                 RingWatch.shared.recordingChanged()
+                RingWatch.shared.linkChanged()
                 RingWatch.shared.follow()
             }
         }
+    }
+
+    /// "forget this ring": museo lets go, and remembers to say how to unpair it from the mac.
+    func forget() {
+        RingActions.live(openFirmware: {}).remove()
+        setForgot(true)
+    }
+
+    /// Setting a ring up again: the note has done its job.
+    func setUp() {
+        setForgot(false)
+        RingActions.live(openFirmware: {}).setUp()
+    }
+
+    private func setForgot(_ forgot: Bool) {
+        forgotRing = forgot
+        UserDefaults.standard.set(forgot, forKey: Self.forgotKey)
+    }
+
+    private static let forgotKey = "museo.mac.forgotRing"
+
+    private func linkChanged() {
+        let linked = RingModel.shared.status.isLinked
+        if linked, forgotRing { setForgot(false) }
+        if linked, !wasLinked { listSoon(after: 4) }
+        wasLinked = linked
     }
 
     private func recordingChanged() {
@@ -65,7 +100,6 @@ final class RingWatch {
         if recording, recordingSince == nil {
             recordingSince = .now
             now = .now
-            appAtStart = NSWorkspace.shared.frontmostApplication?.bundleIdentifier
             ticker = Task {
                 while !Task.isCancelled {
                     try? await Task.sleep(for: .seconds(1))
@@ -76,8 +110,6 @@ final class RingWatch {
             ticker?.cancel()
             ticker = nil
             recordingSince = nil
-            lastRecording = (.now, appAtStart)
-            appAtStart = nil
         }
     }
 }

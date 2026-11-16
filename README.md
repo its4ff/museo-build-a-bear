@@ -6,20 +6,75 @@
 
 <p align="center"><i>a new interface for your thoughts.</i></p>
 
-<p align="center">an open starting point to build anything on museo.</p>
+<p align="center">an open starting point to build anything on museo, on your iphone and your mac.</p>
 
 <p align="center">
   <img src="https://img.shields.io/badge/status-preview-8250df" alt="status: preview">
   <img src="https://img.shields.io/badge/iOS-26-3E5A3F" alt="iOS 26">
+  <img src="https://img.shields.io/badge/macOS-26-3E5A3F" alt="macOS 26">
   <img src="https://img.shields.io/badge/Xcode-26.4-3E5A3F" alt="Xcode 26.4">
 </p>
 
-<p align="center"><b><a href="#the-build-a-bear-path">start in 5 minutes</a> · <a href="#tips">tips</a> · <a href="#two-asks-until-launch">two asks</a></b></p>
+<p align="center"><b><a href="#museo-for-mac">museo for mac</a> · <a href="#museo-for-iphone">museo for iphone</a> · <a href="#the-build-a-bear-path">start in 5 minutes</a> · <a href="#tips">tips</a> · <a href="#two-asks-until-launch">two asks</a></b></p>
 
 > [!IMPORTANT]
 > **preview.** museo build is out ahead of its launch. two small asks [below](#two-asks-until-launch).
 
-## your baseline to build on
+## museo for mac
+
+hold the ring and talk. your words type into whatever app is in front, and every hold lands in a library on your mac. a menu bar app, in [`mac/`](mac/).
+
+<table>
+  <tr>
+    <td width="34%" valign="top">
+      <img src="docs/images/mac/panel.jpg" alt="the menu bar panel: the ring, speech, voice commands and recent muses"><br>
+      <b>the menu bar</b><br>your ring, speech, voice commands, and what you said last.<br>
+      <a href="mac/Sources/MuseoMac/MenuPanel.swift">MenuPanel →</a>
+    </td>
+    <td width="66%" valign="top">
+      <img src="docs/images/mac/island.jpg" alt="the island under the notch: words forming, a prompt for claude, typed into claude"><br>
+      <b>the island</b><br>words form under the notch while you hold, then land where you are.<br>
+      <a href="mac/Sources/MuseoMac/NotchIsland.swift">NotchIsland →</a>
+      <br><br>
+      <img src="docs/images/mac/note.jpg" alt="a museo note: big lora on paper, words forming at the line"><br>
+      <b>museo notes</b><br>⌘N for a bare page. hold to talk, or type. it names itself when you're done.<br>
+      <a href="mac/Sources/MuseoMac/NoteWindow.swift">NoteWindow →</a>
+    </td>
+  </tr>
+  <tr>
+    <td colspan="2" valign="top">
+      <img src="docs/images/mac/library.jpg" alt="the library: every muse by day, one open beside it"><br>
+      <b>the library</b><br>everything you've said, by day, with where it went. search it, play it, copy it.<br>
+      <a href="mac/Sources/MuseoMac/LibraryWindow.swift">LibraryWindow →</a>
+    </td>
+  </tr>
+  <tr>
+    <td colspan="2" valign="top">
+      <img src="docs/images/mac/stats.jpg" alt="your words: how much you said this week, and the commands you use"><br>
+      <b>your words</b><br>how much you said, how long it saved you, the commands you reach for.<br>
+      <a href="mac/Sources/MuseoMac/StatsPane.swift">StatsPane →</a>
+    </td>
+  </tr>
+</table>
+
+**run it** on macOS 26 with Xcode 26.4 or newer:
+
+```bash
+git clone https://github.com/its4ff/museo-build-a-bear.git
+```
+
+```bash
+cd museo-build-a-bear && scripts/mac.sh
+```
+
+museo shows up in the menu bar. set up your ring from the panel, then let it use bluetooth, speech, and accessibility (that last one is how it types into other apps). `scripts/mac.sh log` follows what it's doing.
+
+- **voice commands:** end a hold with "send" to press return. "new line", "switch tab", "undo", "open claude" and more, each one yours to edit or add to.
+- **talk to your agents:** "hey claude…" or "hey cursor…" opens a new chat with what you said.
+- **speech on this mac:** apple dictation out of the box, or parakeet ultra on the neural engine, downloaded once from the panel. audio and words stay on your mac, except where you type them.
+- **your iphone and your mac, one ring:** the mac brings in only what you record after it first sees the ring, newest first, so the iphone keeps its own. the panel brings in the older ones when you ask.
+
+## museo for iphone
 
 the ring sets up, what you say lands on your iphone as words, gets a title and notes, and stays in a library. all of it runs on the phone. you build what comes next.
 
@@ -80,7 +135,7 @@ the ring sets up, what you say lands on your iphone as words, gets a title and n
 - **one ring, one app.** your ring links to one app at a time. remove it from the build-a-bear app (or any other) before your own app can set it up.
 - **one backend, many apps.** send your muses to a backend like convex, so every app you try starts full.
 - **keep a clean baseline.** one untouched clone. clone it again for each idea, and give each its own bundle id in `Config/Local.xcconfig` so they sit side by side on your phone.
-- **the ring lives on iphone.** for a mac app, read your muses from your backend.
+- **one ring, iphone and mac.** museo for mac brings in only what you record after it first sees the ring, so both can sit beside each other. for another app of your own, read your muses from your backend.
 - **a free apple account has limits.** apps you install with it run for 7 days, three at a time on one phone. testflight needs the paid apple developer program.
 
 > [!TIP]
@@ -102,6 +157,7 @@ made something you love? show naveed at [x.com/naveedg](https://x.com/naveedg), 
 |---|---|
 | **to try it** | a Mac with Xcode 26.4 or newer. the simulator runs everything but the ring. |
 | **for the ring** | a museo ring and an iphone on iOS 26 or newer. |
+| **for museo for mac** | macOS 26 and Xcode 26.4 or newer, on any Mac with bluetooth. |
 | **for titles and notes** | Apple Intelligence turned on (iphone 15 Pro or newer). without it, muses still get their words. |
 | **an Apple account** | a free one works on your own iphone, but the app stops opening after 7 days until you run it from Xcode again. a paid developer account lasts a year and adds TestFlight. |
 
@@ -161,7 +217,7 @@ the agent can check its own work: `scripts/build.sh` builds and prints "build ok
 <summary><b>what doesn't work yet</b></summary>
 
 - the simulator has no bluetooth, so the ring needs a real iphone.
-- ring setup is iphone only. a mac app reads your muses from your backend.
+- museo for mac doesn't write titles and notes for muses yet, only names for notes.
 - titles and notes need Apple Intelligence.
 
 </details>
@@ -177,7 +233,8 @@ the agent can check its own work: `scripts/build.sh` builds and prints "build ok
 
 | folder | what's there |
 |---|---|
-| `museo build/` | the app. |
+| `museo build/` | the iphone app. |
+| `mac/` | museo for mac, a Swift package. `scripts/mac.sh` builds and opens it. |
 | `Config/` | `Builder.xcconfig` (the app's name and bundle id, and how to change them) and `Info.plist`. |
 | `docs/` | [the ring in plain words](docs/ring.md) and [the cheat sheet](docs/cheat-sheet.md). |
 | `scripts/` | build and screenshot from the command line. |

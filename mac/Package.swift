@@ -1,23 +1,29 @@
 // swift-tools-version: 6.2
 import PackageDescription
 
-// museo for mac (experiment): a menu bar app. Hold the ring, and what you say is typed into
-// the app in front. Every recording also lands in a small library on this mac.
+// museo for mac: a menu bar app. Hold the ring, and what you say is typed into the app in
+// front. Every recording also lands in a small library on this mac.
 //
-// Builds against your local ../museo-kit on its `mac` branch, the one with macOS support.
-// `scripts/mac.sh` builds it into mac/build/museo.app and opens it.
+// The ring is museo kit, pinned like the iphone app's (0.4.0 is the first with macOS).
+// `scripts/mac.sh` builds it into mac/build/museo.app and opens it. Working on the kit itself?
+// `swift package --package-path mac edit museo-kit --path ../museo-kit` builds against your
+// own checkout; `swift package --package-path mac unedit museo-kit` goes back.
 
 let package = Package(
     name: "MuseoMac",
     platforms: [.macOS("26.0")],
     dependencies: [
-        .package(path: "../../museo-kit"),
+        .package(url: "https://github.com/its4ff/museo-kit.git", exact: "0.4.0"),
+        // Local speech models on the Neural Engine (Parakeet, Cohere Transcribe), downloaded
+        // once from the panel. Apache 2.0. ASR only: no diarization or speech output.
+        .package(url: "https://github.com/FluidInference/FluidAudio.git", exact: "0.18.3", traits: []),
     ],
     targets: [
         .executableTarget(
             name: "MuseoMac",
             dependencies: [
                 .product(name: "MuseoKit", package: "museo-kit"),
+                .product(name: "FluidAudio", package: "FluidAudio"),
             ],
             path: "Sources/MuseoMac",
             swiftSettings: [

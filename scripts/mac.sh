@@ -1,11 +1,11 @@
 #!/bin/bash
-# museo for mac (experiment): build the menu bar app into mac/build/museo.app, then open it.
+# museo for mac: build the menu bar app into mac/build/museo.app, then open it.
 #
 #   scripts/mac.sh          build and open
 #   scripts/mac.sh build    build only
 #   scripts/mac.sh log      follow the app's log (the ring's and the app's "[museo]" lines)
 #
-# Needs ../museo-kit on its `mac` branch (the kit with macOS support). Signs with your first
+# museo kit comes from GitHub at the version mac/Package.swift pins. Signs with your first
 # Apple Development identity so macOS remembers the bluetooth and accessibility permissions
 # between builds; with none it signs ad hoc, and macOS asks again after every build.
 set -euo pipefail
@@ -19,11 +19,6 @@ LOG="$HOME/Library/Logs/museo-mac.log"
 
 if [ "${1:-}" = "log" ]; then
   exec tail -f "$LOG"
-fi
-
-if [ ! -f "$ROOT/../museo-kit/Package.swift" ]; then
-  echo "no ../museo-kit here. clone it next to this folder and switch it to the mac branch."
-  exit 1
 fi
 
 swift build -c release --package-path "$MAC" 2>&1 | grep -E "error|warning: .*/mac/Sources|Compiling MuseoMac|Build complete" || true
@@ -51,6 +46,6 @@ echo "built mac/build/museo.app · signed ${IDENTITY:-ad hoc}"
 if [ "${1:-}" != "build" ]; then
   pkill -x museo 2>/dev/null && sleep 1 || true
   : > "$LOG"
-  open "$APP" --stdout "$LOG" --stderr "$LOG"
+  open "$APP" --stdout "$LOG" --stderr "$LOG" --args -quietLaunch YES
   echo "museo is in the menu bar · scripts/mac.sh log to follow it"
 fi

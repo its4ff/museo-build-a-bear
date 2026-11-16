@@ -1,4 +1,5 @@
 import AppKit
+import Carbon.HIToolbox
 import Foundation
 import MuseoKit
 import Observation
@@ -27,6 +28,10 @@ final class Dictation {
     @ObservationIgnored private var hold = 0
     /// Audio that arrived while the hold's recognizer was still starting, in order.
     @ObservationIgnored private var waiting: [LiveAudioChunk] = []
+    /// The whole hold so far, 16 kHz, for a downloaded model to hear again when it ends.
+    @ObservationIgnored private var heard: [Int16] = []
+    /// When this hold began, to find its recording in the library.
+    @ObservationIgnored private var holdStarted = Date.now
     @ObservationIgnored private var endedWhileStarting = false
 
     private static let typesKey = "museo.mac.typesIntoApps"
@@ -53,12 +58,18 @@ final class Dictation {
             speech?.cancel()
             speech = nil
             waiting = []
+            heard = []
+            holdStarted = .now
             endedWhileStarting = false
             hasNoRecognizer = false
-            FlowBar.shared.listen()
+            MenuIsland.shared.listen()
+            // The panel open would take the words: it holds the focus. Out of the way, so
+            // they land where you were.
+            MenuPanelWindow.closeIfOpen()
             start(hold)
         case .samples(let chunk):
             MenuVoice.shared.hear(chunk.samples)
+            heard.append(contentsOf: chunk.samples)
             if let speech {
                 speech.feed(chunk)
             } else if !hasNoRecognizer {
@@ -68,6 +79,9 @@ final class Dictation {
             if let speech {
                 self.speech = nil
                 finish(speech, hold)
+            } else if hasNoRecognizer {
+                // No apple model for the island, but a downloaded one may still hear it.
+                finish(nil, hold)
             } else {
                 endedWhileStarting = true
             }
@@ -78,14 +92,14 @@ final class Dictation {
         Task {
             let speech = await HoldSpeech.begin { words in
                 guard self.hold == hold else { return }
-                FlowBar.shared.update(words)
+                MenuIsland.shared.update(words)
             }
             guard let speech else {
                 if self.hold == hold {
                     hasNoRecognizer = true
                     waiting = []
-                    FlowBar.shared.finish(note: "getting the speech model · this one is saved")
-                    print("[museo][mac] no speech model yet: this hold saves, nothing typed")
+                    if endedWhileStarting { finish(nil, hold) }
+                    print("[museo][mac] no apple speech model for the island")
                 }
                 return
             }
@@ -103,25 +117,98 @@ final class Dictation {
         }
     }
 
-    private func finish(_ speech: HoldSpeech, _ hold: Int) {
+    private func finish(_ speech: HoldSpeech?, _ hold: Int) {
+        let audio = heard
+        let started = holdStarted
+        heard = []
         Task {
-            let words = await speech.finish()
+            // Apple's words settle first; a downloaded model then hears the whole hold again
+            // and its words win. Either one alone is enough.
+            let apple = YourWords.shared.respell(await speech?.finish() ?? "")
+            let local = await LocalSpeech.shared.words(of: audio).map(YourWords.shared.respell)
+            let words = local ?? apple
             guard !words.isEmpty else {
-                FlowBar.shared.finish(note: nil)
+                MenuIsland.shared.finish(note: speech == nil && local == nil ? "getting the speech model" : nil)
                 return
             }
             lastWords = words
-            let app = NSWorkspace.shared.frontmostApplication?.localizedName
-            // A trailing space so the next hold's words don't run into these.
-            lastTyped = typesIntoApps && TextInserter.insert(words + " ")
-            if lastTyped {
-                RingWatch.shared.flashTyped()
-                MacLibrary.shared.noteTyped(into: app)
-                FlowBar.shared.finish(note: app.map { "typed into \($0)" } ?? "typed")
-            } else {
-                FlowBar.shared.finish(note: "copied · ⌘V to paste")
+            // A museo note in front: the words go straight in at its caret, whatever the
+            // switch says. "undo" and "new line" still work; anything else stays words.
+            if let note = NoteFocus.active {
+                switch VoiceCommands.shared.read(apple: apple, local: local) {
+                case .command(let command, _) where command.keys == "cmd+z":
+                    note.undoManager?.undo()
+                    MacLibrary.shared.forgetCommandHold(startedAt: started)
+                case .command(let command, _) where command.keys == "shift+return":
+                    note.insertText("\n", replacementRange: note.selectedRange())
+                    MacLibrary.shared.forgetCommandHold(startedAt: started)
+                default:
+                    note.insertSpoken(words)
+                    MacLibrary.shared.noteTyped(into: "your note")
+                }
+                lastTyped = true
+                let count = MacLibrary.wordCount(words)
+                MenuIsland.shared.finish(note: "in your note · \(count) \(count == 1 ? "word" : "words")")
+                print("[museo][note] hold \(hold): \(words.count) characters into a note")
+                return
             }
-            print("[museo][mac] hold \(hold): \(lastTyped ? "typed" : "copied") \(words.count) characters")
+            guard typesIntoApps else {
+                TextInserter.copy(words + " ")
+                land(.copied, hold, words)
+                return
+            }
+            switch VoiceCommands.shared.read(apple: apple, local: local) {
+            case .command(let command, let said):
+                let ran = VoiceCommands.shared.run(command)
+                lastTyped = false
+                // A command isn't something you said to keep.
+                if ran {
+                    MacLibrary.shared.forgetCommandHold(startedAt: started)
+                    CommandTally.shared.add(command.say.first ?? said)
+                }
+                MenuIsland.shared.finish(note: ran ? "\(said) · \(VoiceCommands.label(command))" : "couldn't \(said)")
+                print("[museo][command] hold \(hold): \"\(said)\" \(ran ? "ran" : "couldn't run")")
+            case .ask(let agent, let text, let send):
+                if await AgentHandoff.hand(text, to: agent, send: send) {
+                    lastTyped = true
+                    MacLibrary.shared.noteTyped(into: agent.app, sent: send)
+                    CommandTally.shared.add("hey \(agent.say)")
+                    MenuIsland.shared.finish(note: send ? "sent to \(agent.say)" : "in \(agent.say)")
+                    print("[museo][agent] hold \(hold): \(send ? "sent" : "typed") \(text.count) characters to \(agent.app)")
+                } else {
+                    // Claude didn't come forward: the words go where you were, as any hold's.
+                    land(TextInserter.insert(text + " "), hold, text)
+                }
+            case .typeThenSend(let kept):
+                let landing = TextInserter.insert(kept)
+                if landing != .copied {
+                    // Let the paste land before return goes after it.
+                    try? await Task.sleep(for: .milliseconds(250))
+                    TextInserter.press(CGKeyCode(kVK_Return))
+                }
+                land(landing, hold, kept, sent: true)
+                CommandTally.shared.add("send")
+            case .words(let words):
+                // A trailing space so the next hold's words don't run into these.
+                land(TextInserter.insert(words + " "), hold, words)
+            }
         }
+    }
+
+    /// Says where a hold's words went.
+    private func land(_ landing: TextInserter.Landing, _ hold: Int, _ words: String, sent: Bool = false) {
+        switch landing {
+        case .typed(let app):
+            lastTyped = true
+            RingWatch.shared.flashTyped()
+            MacLibrary.shared.noteTyped(into: app, sent: sent)
+            // The app only when the focused field told us; never a guess.
+            let done = sent ? "sent" : "typed"
+            MenuIsland.shared.finish(note: app.map { "\(done) into \($0)" } ?? done)
+        case .copied:
+            lastTyped = false
+            MenuIsland.shared.finish(note: "copied · ⌘V to paste")
+        }
+        print("[museo][mac] hold \(hold): \(lastTyped ? (sent ? "sent" : "typed") : "copied") \(words.count) characters")
     }
 }
