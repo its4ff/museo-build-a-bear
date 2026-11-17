@@ -423,6 +423,24 @@ struct MenuPanel: View {
             }
             .buttonStyle(.plain)
             .keyboardShortcut("o")
+            Text("·")
+                .font(MuseType.metaMedium)
+                .foregroundStyle(MuseColor.ink55)
+                .accessibilityHidden(true)
+            // Straight to a blank page, without the library in between.
+            Button {
+                openWindow(id: NoteWindow.id, value: UUID())
+                NSApp.activate()
+            } label: {
+                Text("new note")
+                    .font(MuseType.metaMedium)
+                    .foregroundStyle(MuseColor.moss600)
+                    .frame(height: 28)
+                    .contentShape(Rectangle())
+            }
+            .buttonStyle(.plain)
+            .keyboardShortcut("n")
+            .help("new note · ⌘N")
             Spacer(minLength: 0)
             Button {
                 NSApp.terminate(nil)

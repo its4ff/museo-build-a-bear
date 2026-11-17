@@ -156,20 +156,29 @@ final class Dictation {
             }
             lastWords = words
             // A museo note in front: the words go straight in at its caret, whatever the
-            // switch says. "undo" and "new line" still work; anything else stays words.
+            // switch says. A hold that only says one of the note's shortcuts does that instead.
             if let note = NoteFocus.active {
-                switch VoiceCommands.shared.read(apple: apple, local: local) {
-                case .command(let command, _) where command.keys == "cmd+z":
-                    note.undoManager?.undo()
-                    MacLibrary.shared.forgetCommandHold(startedAt: started)
-                case .command(let command, _) where command.keys == "shift+return":
-                    note.insertText("\n", replacementRange: note.selectedRange())
-                    MacLibrary.shared.forgetCommandHold(startedAt: started)
-                default:
-                    note.insertSpoken(words)
-                    MacLibrary.shared.noteTyped(into: "your note")
-                }
                 lastTyped = true
+                if let shortcut = NoteShortcut.read(apple: apple, local: local) {
+                    let did = note.run(shortcut)
+                    MacLibrary.shared.forgetCommandHold(startedAt: started)
+                    MenuIsland.shared.finish(note: did)
+                    print("[museo][note] hold \(hold): \(did)")
+                    return
+                }
+                // The voice commands that leave the note run from one too: "switch app", and
+                // "open" an app. The rest press keys that mean nothing on a page.
+                if case .command(let command, let said) = VoiceCommands.shared.read(apple: apple, local: local),
+                   command.keys == "cmd+tab" || command.open != nil, VoiceCommands.shared.run(command) {
+                    lastTyped = false
+                    MacLibrary.shared.forgetCommandHold(startedAt: started)
+                    CommandTally.shared.add(command.say.first ?? said)
+                    MenuIsland.shared.finish(note: said)
+                    print("[museo][note] hold \(hold): \"\(said)\" ran from a note")
+                    return
+                }
+                note.insertSpoken(words)
+                MacLibrary.shared.noteTyped(into: "your note")
                 let count = MacLibrary.wordCount(words)
                 MenuIsland.shared.finish(note: "in your note · \(count) \(count == 1 ? "word" : "words")")
                 print("[museo][note] hold \(hold): \(words.count) characters into a note")

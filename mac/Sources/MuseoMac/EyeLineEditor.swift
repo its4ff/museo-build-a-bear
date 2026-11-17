@@ -12,6 +12,10 @@ struct EyeLineEditor: NSViewRepresentable {
     /// A hold's words as they form: shown at the caret in soft ink, wrapping like the rest,
     /// but not part of the note until they land.
     var forming: String?
+    #if DEBUG
+    /// For `ScreenSheet`: the last words caught partway through soaking in.
+    var previewLanding = false
+    #endif
 
     static let fontSize: CGFloat = 26
     static let lineHeight: CGFloat = 44
@@ -44,7 +48,9 @@ struct EyeLineEditor: NSViewRepresentable {
         textView.usesFindBar = true
         textView.isAutomaticTextCompletionEnabled = false
         textView.inlinePredictionType = .no
-        textView.insertionPointColor = NSColor(MuseColor.moss)
+        // No cursor: the page's moss tick marks the line, and a still mark shows only when
+        // you move back into the words (`EyeLineTextView.placeNib`).
+        textView.insertionPointColor = .clear
         textView.delegate = context.coordinator
         textView.layoutManager?.delegate = context.coordinator
         textView.string = text
@@ -53,6 +59,13 @@ struct EyeLineEditor: NSViewRepresentable {
 
         scrollView.documentView = textView
         context.coordinator.watchSize(of: scrollView)
+        #if DEBUG
+        if previewLanding {
+            let length = (text as NSString).length
+            let from = max(0, length - 64)
+            textView.ink.still(NSRange(location: from, length: length - from), at: 0.42)
+        }
+        #endif
         return scrollView
     }
 
@@ -120,7 +133,7 @@ struct EyeLineEditor: NSViewRepresentable {
             textView.font = font
             textView.defaultParagraphStyle = paragraph
             textView.typingAttributes = attributes
-            textView.ink = attributes
+            textView.inkLook = attributes
             if let storage = textView.textStorage, storage.length > 0 {
                 storage.setAttributes(attributes, range: NSRange(location: 0, length: storage.length))
             }
@@ -241,10 +254,125 @@ final class EyeLineTextView: NSTextView {
         return rect
     }
 
+    // MARK: - No cursor
+
+    /// The system's caret never shows: this page is for speaking.
+    override func drawInsertionPoint(in rect: NSRect, color: NSColor, turnedOn flag: Bool) {}
+
+    override func didAddSubview(_ subview: NSView) {
+        super.didAddSubview(subview)
+        if let caret = subview as? NSTextInsertionIndicator { caret.displayMode = .hidden }
+    }
+
+    private lazy var nib: NSView = {
+        let nib = NSView()
+        nib.wantsLayer = true
+        nib.layer?.backgroundColor = NSColor(MuseColor.moss).cgColor
+        nib.layer?.cornerRadius = 0.75
+        nib.alphaValue = 0
+        addSubview(nib)
+        return nib
+    }()
+    private var nibFades: Task<Void, Never>?
+
+    override func setSelectedRanges(_ ranges: [NSValue], affinity: NSSelectionAffinity, stillSelecting: Bool) {
+        super.setSelectedRanges(ranges, affinity: affinity, stillSelecting: stillSelecting)
+        placeNib()
+    }
+
+    /// A still moss mark where you are, only while you're back inside the words (at the end,
+    /// the page's tick is enough). It never blinks, and fades a moment after you stop.
+    private func placeNib() {
+        nibFades?.cancel()
+        let caret = selectedRange()
+        guard caret.length == 0, caret.location < (string as NSString).length, formingShown == nil,
+              let layoutManager, window != nil else {
+            nib.alphaValue = 0
+            return
+        }
+        let glyph = layoutManager.glyphIndexForCharacter(at: caret.location)
+        let line = layoutManager.lineFragmentRect(forGlyphAt: glyph, effectiveRange: nil)
+        let spot = layoutManager.location(forGlyphAt: glyph)
+        nib.frame = NSRect(
+            x: textContainerOrigin.x + line.minX + spot.x - 0.75,
+            y: textContainerOrigin.y + line.minY + spot.y - 20,
+            width: 1.5,
+            height: 25
+        )
+        nib.alphaValue = 1
+        nibFades = Task { [weak self] in
+            try? await Task.sleep(for: .seconds(1.2))
+            guard !Task.isCancelled, let self else { return }
+            NSAnimationContext.beginGrouping()
+            NSAnimationContext.current.duration = 0.5
+            self.nib.animator().alphaValue = 0
+            NSAnimationContext.endGrouping()
+        }
+    }
+
+    // MARK: - Ink
+
+    /// The ink's motion on this page: soaking in, blooming, draining.
+    private(set) lazy var ink = NoteInk(self)
+    /// The last hold's words, while they're still where they landed: what "delete that" takes.
+    private var lastSpoken: NSRange?
+    /// Nothing has changed since that hold landed: "undo" takes exactly those words.
+    private var spokenIsLastEdit = false
+    private var isLandingSpoken = false
+
+    override func shouldChangeText(in affectedCharRange: NSRange, replacementString: String?) -> Bool {
+        let should = super.shouldChangeText(in: affectedCharRange, replacementString: replacementString)
+        guard should else { return false }
+        self.ink.settle(from: affectedCharRange.location)
+        if !isLandingSpoken {
+            spokenIsLastEdit = false
+            if let lastSpoken, affectedCharRange.location < NSMaxRange(lastSpoken) { self.lastSpoken = nil }
+        }
+        return true
+    }
+
+    /// Typed letters bloom in from soft ink.
+    override func insertText(_ string: Any, replacementRange: NSRange) {
+        super.insertText(string, replacementRange: replacementRange)
+        guard !isLandingSpoken, !hasMarkedText() else { return }
+        let typed = (string as? String) ?? (string as? NSAttributedString)?.string ?? ""
+        let count = (typed as NSString).length
+        let caret = selectedRange().location
+        guard count > 0, caret >= count, !typed.allSatisfy(\.isWhitespace) else { return }
+        self.ink.bloom(NSRange(location: caret - count, length: count))
+    }
+
+    /// "undo": a hold that just landed drains first, then goes. Anything else just undoes.
+    func undoLast() {
+        guard spokenIsLastEdit, let range = lastSpoken, NSMaxRange(range) <= (string as NSString).length else {
+            undoManager?.undo()
+            return
+        }
+        lastSpoken = nil
+        self.ink.drain(range) { [weak self] in self?.undoManager?.undo() }
+    }
+
+    /// "delete that": the last hold's words drain and go. ⌘Z, or "undo", brings them back.
+    /// False when there's no hold still standing where it landed.
+    func deleteSpoken() -> Bool {
+        guard let range = lastSpoken, NSMaxRange(range) <= (string as NSString).length else { return false }
+        lastSpoken = nil
+        self.ink.drain(range) { [weak self] in
+            guard let self, NSMaxRange(range) <= (self.string as NSString).length else { return }
+            self.breakUndoCoalescing()
+            if self.shouldChangeText(in: range, replacementString: "") {
+                self.textStorage?.replaceCharacters(in: range, with: "")
+                self.didChangeText()
+            }
+            self.breakUndoCoalescing()
+        }
+        return true
+    }
+
     // MARK: - Words from a hold
 
     /// The note's own look, for typing after the forming words have come and gone.
-    var ink: [NSAttributedString.Key: Any] = [:]
+    var inkLook: [NSAttributedString.Key: Any] = [:]
     private static let formingKey = NSAttributedString.Key("museoForming")
     private var formingShown: String?
 
@@ -278,15 +406,15 @@ final class EyeLineTextView: NSTextView {
         if let words {
             let before = caret > 0 ? (string as NSString).substring(with: NSRange(location: caret - 1, length: 1)) : ""
             let lead = !before.isEmpty && !(before.last?.isWhitespace ?? true) ? " " : ""
-            var soft = ink
-            soft[.foregroundColor] = NSColor(MuseColor.ink55).withAlphaComponent(0.7)
+            var soft = inkLook
+            soft[.foregroundColor] = NoteInk.soft
             soft[Self.formingKey] = true
             storage.insert(NSAttributedString(string: lead + words, attributes: soft), at: caret)
         }
         storage.endEditing()
         formingShown = words
         setSelectedRange(NSRange(location: caret, length: 0))
-        typingAttributes = ink
+        typingAttributes = inkLook
         // Edits straight to the storage don't resize the view: do it, so the line can center.
         if let layoutManager, let textContainer { layoutManager.ensureLayout(for: textContainer) }
         sizeToFit()
@@ -294,13 +422,24 @@ final class EyeLineTextView: NSTextView {
     }
 
     /// A hold's words at the caret, with a space before them when they'd run into a word.
-    /// Through `insertText`, so ⌘Z takes them back and the page saves them.
+    /// Through `insertText`, so ⌘Z takes them back and the page saves them. Then they soak in.
     func insertSpoken(_ words: String) {
         showForming(nil)
         let caret = selectedRange()
         let before = caret.location > 0 ? (string as NSString).substring(with: NSRange(location: caret.location - 1, length: 1)) : ""
         let needsSpace = !before.isEmpty && !(before.last?.isWhitespace ?? true) && !(words.first.map { ".,;:?!".contains($0) } ?? false)
-        insertText((needsSpace ? " " : "") + words, replacementRange: caret)
+        let landing = (needsSpace ? " " : "") + words
+        // Its own step for ⌘Z, and the ink soaks in from where the forming words stood.
+        breakUndoCoalescing()
+        isLandingSpoken = true
+        insertText(landing, replacementRange: caret)
+        isLandingSpoken = false
+        breakUndoCoalescing()
+        let landed = NSRange(location: caret.location, length: (landing as NSString).length)
+        guard NSMaxRange(landed) <= (string as NSString).length else { return }
+        lastSpoken = landed
+        spokenIsLastEdit = true
+        self.ink.land(landed)
     }
 }
 

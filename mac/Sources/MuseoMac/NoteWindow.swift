@@ -17,7 +17,11 @@ struct NoteWindow: View {
     @State private var isNaming = false
     @State private var showsMeta = false
     @State private var hideMeta: Task<Void, Never>?
+    @State private var showsShortcuts = false
+    @State private var hideShortcuts: Task<Void, Never>?
     @Environment(\.dismiss) private var dismiss
+    @Environment(\.controlActiveState) private var activeState
+    private let asks = NoteAsks.shared
 
     var body: some View {
         ZStack {
@@ -26,11 +30,21 @@ struct NoteWindow: View {
                     .transition(.opacity)
             } else {
                 NotePage(text: $text, isLookingBack: $isLookingBack)
+                    .opacity(showsShortcuts ? 0 : 1)
                     .transition(.opacity)
                     .overlay(alignment: .bottom) { meta }
+                if showsShortcuts {
+                    NoteShortcutList()
+                        .transition(.opacity)
+                        .onTapGesture { showsShortcuts = false }
+                }
             }
         }
         .museAnimation(MuseMotion.dissolve, value: isNaming)
+        .museAnimation(MuseMotion.dissolve, value: showsShortcuts)
+        // Said into this note: "name it", "shortcuts".
+        .onChange(of: asks.nameIt) { if activeState == .key { finish() } }
+        .onChange(of: asks.shortcuts) { if activeState == .key { listShortcuts() } }
         // A hold into this note: its island hangs from the note's top, not the screen's.
         .overlay(alignment: .top) {
             NoteIsland()
@@ -44,7 +58,10 @@ struct NoteWindow: View {
         }
         .onAppear(perform: load)
         .onDisappear(perform: leave)
-        .onChange(of: text) { _, words in save(words) }
+        .onChange(of: text) { _, words in
+            save(words)
+            showsShortcuts = false
+        }
         .background {
             // ⌘return: the note is done, name it.
             Button("") { finish() }
@@ -57,11 +74,11 @@ struct NoteWindow: View {
     /// The word count and the way out, while the pointer moves.
     private var meta: some View {
         let count = MacLibrary.wordCount(text)
-        return Text("\(count) \(count == 1 ? "word" : "words") · ⌘return to name it")
+        return Text("\(count) \(count == 1 ? "word" : "words") · ⌘return to name it · say \"shortcuts\"")
             .font(MuseType.caption)
             .foregroundStyle(MuseColor.ink55)
             .padding(.bottom, MuseSpacing.lg)
-            .opacity(showsMeta && count > 0 ? 1 : 0)
+            .opacity(showsMeta && count > 0 && !showsShortcuts ? 1 : 0)
             .museAnimation(MuseMotion.dissolve, value: showsMeta)
             .accessibilityHidden(!showsMeta)
     }
@@ -87,6 +104,7 @@ struct NoteWindow: View {
     private func leave() {
         DockPresence.closed()
         hideMeta?.cancel()
+        hideShortcuts?.cancel()
         if text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
             library.dropNote(id)
         } else if library.note(id)?.name == nil {
@@ -98,6 +116,18 @@ struct NoteWindow: View {
         guard !isNaming, !text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else { return }
         library.saveNote(id, words: text, startedAt: startedAt)
         isNaming = true
+    }
+
+    /// What you can say, over the page for a few seconds, or until you click or write.
+    private func listShortcuts() {
+        guard !isNaming else { return }
+        showsShortcuts = true
+        hideShortcuts?.cancel()
+        hideShortcuts = Task {
+            try? await Task.sleep(for: .seconds(7))
+            guard !Task.isCancelled else { return }
+            showsShortcuts = false
+        }
     }
 
     private func reveal() {
@@ -120,6 +150,8 @@ struct NotePage: View {
     #if DEBUG
     /// For `ScreenSheet`: a hold's words as they'd form, without a ring.
     var previewForming: String?
+    /// For `ScreenSheet`: the last words partway through soaking in.
+    var previewLanding = false
     #endif
     @Environment(\.controlActiveState) private var activeState
     @State private var size = CGSize(width: 1080, height: 720)
@@ -139,7 +171,7 @@ struct NotePage: View {
         let eye = size.height / 2
         let left = max(MuseSpacing.sectionLabel, (size.width - EyeLineEditor.columnWidth) / 2)
         ZStack(alignment: .topLeading) {
-            EyeLineEditor(text: $text, isLookingBack: $isLookingBack, forming: forming)
+            editor
                 .mask { fade(height: size.height) }
             if text.isEmpty, forming == nil {
                 Text("hold the ring, or type.")
@@ -159,6 +191,14 @@ struct NotePage: View {
         }
         .museAnimation(MuseMotion.dissolve, value: forming == nil)
         .onGeometryChange(for: CGSize.self) { $0.size } action: { size = $0 }
+    }
+
+    private var editor: EyeLineEditor {
+        var editor = EyeLineEditor(text: $text, isLookingBack: $isLookingBack, forming: forming)
+        #if DEBUG
+        editor.previewLanding = previewLanding
+        #endif
+        return editor
     }
 
     /// Lines above the eye line fade toward the top; looking back, they all come back.

@@ -113,6 +113,9 @@ enum ScreenSheet {
             .overlay(alignment: .top) { NoteIsland(preview: .some(nil)) }
             .background { MuseBackground() }
         save(holding, size: NSSize(width: 1080, height: 720), as: "note-holding.png", in: folder)
+        // Let go: the last words soaking in, left to right. And what you can say in a note.
+        save(NotePage(text: .constant(sample), isLookingBack: .constant(false), previewLanding: true).background { MuseBackground() }, size: NSSize(width: 1080, height: 720), as: "note-landing.png", in: folder)
+        save(NoteShortcutList().background { MuseBackground() }, size: NSSize(width: 1080, height: 720), as: "note-shortcuts.png", in: folder)
         save(NoteIsland(preview: "in your note · 12 words").padding(20).background(MuseColor.ground), size: NSSize(width: 320, height: 80), as: "note-island-landed.png", in: folder)
         // The sidebar with notes in it, a note open.
         if let note = library.muses.first(where: \.isNote) {
