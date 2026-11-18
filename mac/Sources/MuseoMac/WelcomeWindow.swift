@@ -16,6 +16,9 @@ struct WelcomeWindow: View {
     @State private var step = WelcomeStep.hello
     @State private var canType = TextInserter.canType
     @State private var said: String?
+    /// When the download was first seen moving, and how far it was then: for the time left.
+    @State private var downloadSeen: (at: Date, share: Double)?
+    @State private var timeLeft: String?
     @Environment(\.dismissWindow) private var dismissWindow
     private let dictation = Dictation.shared
     private let watch = RingWatch.shared
@@ -31,6 +34,7 @@ struct WelcomeWindow: View {
             ringName: RingNames.shared.nickname(for: ring.advertisedName) ?? ring.advertisedName,
             canType: canType,
             model: local.states[kind] ?? .missing,
+            timeLeft: timeLeft,
             said: said,
             action: action,
             isReady: isReady,
@@ -52,6 +56,7 @@ struct WelcomeWindow: View {
             }
         }
         .onChange(of: local.states) { _, states in
+            estimate(states[kind])
             // It landed: it's the one that hears from the next hold, as when picked in the panel.
             guard local.wanted == kind, states[kind] == .ready else { return }
             local.wanted = nil
@@ -117,6 +122,28 @@ struct WelcomeWindow: View {
             watch.setUp()
         } else {
             RingActions.live(openFirmware: {}).lookForIt()
+        }
+    }
+
+    /// About how long the download has left, from how fast it has gone so far. Said only
+    /// once there is enough to judge by, and rounded: it is an estimate.
+    private func estimate(_ state: LocalSpeech.State?) {
+        guard case .downloading(let share) = state, share > 0 else {
+            timeLeft = nil
+            return
+        }
+        guard let seen = downloadSeen else {
+            downloadSeen = (.now, share)
+            return
+        }
+        let elapsed = Date.now.timeIntervalSince(seen.at)
+        let gained = share - seen.share
+        guard elapsed > 4, gained > 0.02 else { return }
+        let seconds = (1 - share) / (gained / elapsed)
+        switch seconds {
+        case ..<50: timeLeft = "less than a minute left"
+        case ..<90: timeLeft = "about a minute left"
+        default: timeLeft = "about \(Int((seconds / 60).rounded())) minutes left"
         }
     }
 

@@ -51,6 +51,11 @@ nonisolated enum WelcomeMetrics {
     static let said: CGFloat = 28
     static let saidLeading: CGFloat = 8
     static let dot: CGFloat = 6
+    static let pick: CGFloat = 340
+    static let pickRow: CGFloat = 56
+    static let pickMark: CGFloat = 26
+    static let pickMarkDots = 21
+    static let signalBar = CGSize(width: 3, height: 14)
     static let bar = CGSize(width: 260, height: 4)
     static let check: CGFloat = 12
     /// The dune, a touch quieter than the library's: there is almost nothing on the page.
@@ -68,6 +73,11 @@ struct WelcomePage: View {
     var canType = false
     /// How the speech model's download stands.
     var model = LocalSpeech.State.missing
+    /// About how long the download has left, once that can be told: "about 2 minutes left".
+    var timeLeft: String?
+    /// Several rings answered: which, nearest first, for choosing between them.
+    var nearby: [NearbyRing] = []
+    var choose: (NearbyRing) -> Void = { _ in }
     /// The first words said, once there are some.
     var said: String?
     /// The button's words when they differ from the step's own, and whether it can be pressed.
@@ -81,9 +91,9 @@ struct WelcomePage: View {
         VStack(spacing: 0) {
             Spacer(minLength: 0)
             middle
-                .frame(height: WelcomeMetrics.mark + MuseSpacing.md)
+                .frame(height: isPicking ? 0 : WelcomeMetrics.mark + MuseSpacing.md)
             VStack(spacing: MuseSpacing.sm) {
-                Text(heard ?? step.title)
+                Text(isPicking ? "which one is yours?" : (heard ?? step.title))
                     .font(MuseFont.lora(heard == nil ? WelcomeMetrics.title : WelcomeMetrics.said))
                     .lineSpacing(WelcomeMetrics.saidLeading)
                     .multilineTextAlignment(.center)
@@ -91,7 +101,7 @@ struct WelcomePage: View {
                     .tracking(WelcomeMetrics.titleTracking)
                     .foregroundStyle(MuseColor.ink)
                     .accessibilityAddTraits(.isHeader)
-                Text(heard == nil ? step.line : "that's all there is to it. museo lives in your menu bar.")
+                Text(isPicking ? "more than one ring is near. the closest is on top." : (heard == nil ? step.line : "that's all there is to it. museo lives in your menu bar."))
                     .font(MuseType.body)
                     .foregroundStyle(MuseColor.ink70)
                     .multilineTextAlignment(.center)
@@ -101,6 +111,15 @@ struct WelcomePage: View {
             if step == .typing {
                 allowed(canType ? "museo can type into your apps" : "accessibility › museo, switched on", canType)
                     .padding(.top, MuseSpacing.xl)
+            }
+            if isPicking {
+                VStack(spacing: MuseSpacing.xs) {
+                    ForEach(nearby) { ring in
+                        NearbyRingRow(ring: ring, isClosest: ring.id == nearby.first?.id) { choose(ring) }
+                    }
+                }
+                .frame(width: WelcomeMetrics.pick)
+                .padding(.top, MuseSpacing.xl)
             }
             if step == .model {
                 download
@@ -116,9 +135,10 @@ struct WelcomePage: View {
             }
             .buttonStyle(MusePressStyle())
             .keyboardShortcut(.defaultAction)
-            .disabled(!isReady)
-            .opacity(isReady ? 1 : WelcomeMetrics.waiting)
-            .padding(.top, MuseSpacing.section + MuseSpacing.xs)
+            .disabled(!isReady || isPicking)
+            .opacity(isPicking ? 0 : (isReady ? 1 : WelcomeMetrics.waiting))
+            .frame(height: isPicking ? 0 : nil)
+            .padding(.top, isPicking ? 0 : MuseSpacing.section + MuseSpacing.xs)
             Button {
                 skip?()
             } label: {
@@ -150,6 +170,8 @@ struct WelcomePage: View {
         case .hello:
             PocketHalftoneRing(size: WelcomeMetrics.mark, ink: MuseColor.moss, dots: WelcomeMetrics.markDots)
                 .accessibilityHidden(true)
+        case .ring where nearby.count > 1:
+            EmptyView()
         case .ring:
             VStack(spacing: MuseSpacing.sm) {
                 Spacer(minLength: 0)
@@ -179,6 +201,9 @@ struct WelcomePage: View {
     /// Their first words take the title's place once they are said.
     private var heard: String? { step == .firstHold ? said : nil }
 
+    /// Several rings answered and none is linked yet: the page asks which.
+    private var isPicking: Bool { step == .ring && nearby.count > 1 }
+
     private var found: Bool {
         if case .away = ring { return false }
         return true
@@ -205,7 +230,7 @@ struct WelcomePage: View {
         }
         let word = switch model {
         case .ready: "it's here"
-        case .downloading(let share): "\(Int(share * 100))%"
+        case .downloading(let share): ["\(Int(share * 100))%", timeLeft].compactMap { $0 }.joined(separator: " · ")
         case .missing: "starting…"
         case .failed: "it didn't come down. it will try again from the menu."
         }
@@ -239,5 +264,72 @@ struct WelcomePage: View {
         }
         .accessibilityElement()
         .accessibilityLabel("page \(step.rawValue + 1) of \(WelcomeStep.allCases.count)")
+    }
+}
+
+/// A ring that answered while looking: its name, and how strongly it is heard.
+nonisolated struct NearbyRing: Identifiable, Hashable, Sendable {
+    let id: String
+    let name: String
+    /// How near it is, 0 (faint) to 1 (right here), from its signal.
+    var nearness: Double
+
+    /// A bluetooth signal in dBm as nearness: about -90 is the far edge, -40 right beside.
+    static func nearness(rssi: Int) -> Double {
+        min(1, max(0, (Double(rssi) + 90) / 50))
+    }
+}
+
+/// One ring to choose: its mark, its name, and its signal as five small bars that fill as it
+/// comes closer. The nearest says so.
+struct NearbyRingRow: View {
+    let ring: NearbyRing
+    var isClosest = false
+    var choose: () -> Void = {}
+
+    @State private var isHovered = false
+
+    var body: some View {
+        Button(action: choose) {
+            HStack(spacing: MuseSpacing.sm) {
+                PocketHalftoneRing(size: WelcomeMetrics.pickMark, ink: MuseColor.moss, dots: WelcomeMetrics.pickMarkDots)
+                    .accessibilityHidden(true)
+                VStack(alignment: .leading, spacing: 1) {
+                    Text(ring.name)
+                        .font(MuseFont.lora(17))
+                        .foregroundStyle(MuseColor.ink)
+                        .lineLimit(1)
+                    if isClosest {
+                        Text("closest")
+                            .font(MuseType.caption)
+                            .foregroundStyle(MuseColor.moss600)
+                    }
+                }
+                Spacer(minLength: MuseSpacing.sm)
+                signal
+            }
+            .padding(.horizontal, MuseSpacing.md)
+            .frame(height: WelcomeMetrics.pickRow)
+            .contentShape(RoundedRectangle(cornerRadius: MuseRadius.control, style: .continuous))
+        }
+        .buttonStyle(.plain)
+        .duoTileGlass(cornerRadius: MuseRadius.control)
+        .opacity(isHovered || isClosest ? 1 : 0.86)
+        .onHover { isHovered = $0 }
+        .accessibilityLabel("\(ring.name)\(isClosest ? ", closest" : "")")
+    }
+
+    /// Five bars, each a little taller, as many in moss as the ring is near.
+    private var signal: some View {
+        let lit = max(1, Int((ring.nearness * 5).rounded()))
+        return HStack(alignment: .bottom, spacing: MuseSpacing.xxs / 2 + 1) {
+            ForEach(0..<5, id: \.self) { bar in
+                Capsule()
+                    .fill(bar < lit ? MuseColor.moss600 : MuseColor.ink.opacity(0.14))
+                    .frame(width: WelcomeMetrics.signalBar.width, height: WelcomeMetrics.signalBar.height * (0.4 + 0.15 * Double(bar)))
+            }
+        }
+        .museAnimation(MuseMotion.snappy, value: lit)
+        .accessibilityHidden(true)
     }
 }

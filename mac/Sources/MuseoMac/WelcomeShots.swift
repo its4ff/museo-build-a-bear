@@ -9,7 +9,14 @@ enum WelcomeShots {
             DuoShot("welcome-1", size: size) { WelcomePage(step: .hello) },
             DuoShot("welcome-2", size: size) { WelcomePage(step: .ring, ring: .linked(battery: 82), ringName: "Museo_bd27") },
             DuoShot("welcome-3", size: size) { WelcomePage(step: .typing, canType: false, action: "open settings", skip: {}) },
-            DuoShot("welcome-model", size: size) { WelcomePage(step: .model, model: .downloading(0.62), isReady: false, skip: {}) },
+            DuoShot("welcome-model", size: size) { WelcomePage(step: .model, model: .downloading(0.31), timeLeft: "about 2 minutes left", isReady: false, skip: {}) },
+            DuoShot("welcome-pick", size: size) {
+                WelcomePage(step: .ring, nearby: [
+                    NearbyRing(id: "a", name: "Museo_bd27", nearness: NearbyRing.nearness(rssi: -44)),
+                    NearbyRing(id: "b", name: "Museo_47cf", nearness: NearbyRing.nearness(rssi: -63)),
+                    NearbyRing(id: "c", name: "Museo_9e10", nearness: NearbyRing.nearness(rssi: -81)),
+                ], isReady: false, skip: {})
+            },
             DuoShot("welcome-4", size: CGSize(width: 980, height: 700)) { firstHold },
         ]
     }
