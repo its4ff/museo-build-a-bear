@@ -346,11 +346,8 @@ struct MenuPanel: View {
                         .toggleStyle(PanelSwitchStyle())
                 }
                 if commands.isOn {
-                    row("at a hold's end, too") {
-                        Toggle("commands at a hold's end, too", isOn: $commands.readsEdges)
-                            .toggleStyle(PanelSwitchStyle())
-                    }
-                    .help("say one after a pause, at the end or the start of a hold, and it runs with the words")
+                    // Commands at a hold's edge are simply on (`VoiceCommands.readsEdges`),
+                    // with no row of their own.
                     CommandsSection()
                         .padding(.top, MuseSpacing.xxs)
                 }
