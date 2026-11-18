@@ -15,7 +15,6 @@ struct NotePane: View {
             page
         }
         .scrollIndicators(.hidden)
-        .background { MuseBackground() }
         .overlay(alignment: .topTrailing) { actions }
         .confirmationDialog("delete this note?", isPresented: $asksToDelete) {
             Button("delete", role: .destructive) { MacLibrary.shared.remove(note.id) }
@@ -30,75 +29,34 @@ struct NotePane: View {
     var still: some View {
         page
             .frame(maxHeight: .infinity, alignment: .top)
-            .background { MuseBackground() }
+            .background { PocketGround() }
             .overlay(alignment: .topTrailing) { actions }
     }
     #endif
 
     private var page: some View {
-        VStack(alignment: .leading, spacing: MuseSpacing.xl) {
-            VStack(alignment: .leading, spacing: MuseSpacing.sm) {
-                Text([note.createdAt.musePageDate, note.createdAt.museClock, note.meta].joined(separator: " · "))
-                    .font(MuseFont.mono(.caption))
-                    .foregroundStyle(MuseColor.ink55)
-                Text(note.name ?? "naming it…")
-                    .font(note.name == nil ? MuseFont.loraItalic(40) : MuseType.display)
-                    .tracking(MuseType.displayTracking)
-                    .foregroundStyle(note.name == nil ? MuseColor.ink55 : MuseColor.ink)
-                    .fixedSize(horizontal: false, vertical: true)
+        LeafColumn {
+            VStack(alignment: .leading, spacing: MuseSpacing.section) {
+                VStack(alignment: .leading, spacing: MuseSpacing.md) {
+                    LeafMono([note.createdAt.musePageDate, note.createdAt.museClock, note.meta].joined(separator: " · "))
+                    LeafTitle(note.name ?? "naming it…", quiet: note.name == nil)
+                }
+                LeafWords(note.words ?? "")
+                LeafFoot(left: LibraryWords.kept, keys: LibraryWords.noteKeys)
+                    .padding(.top, MuseSpacing.xs)
             }
-            Text(note.words ?? "")
-                .font(MuseFont.lora(22))
-                .foregroundStyle(MuseColor.ink)
-                .lineSpacing(MuseSpacing.xs)
-                .textSelection(.enabled)
-                .frame(maxWidth: .infinity, alignment: .leading)
-            Button {
-                openWindow(id: NoteWindow.id, value: note.id)
-            } label: {
-                Text("open the note")
-                    .font(MuseType.captionMedium)
-                    .foregroundStyle(MuseColor.moss600)
-                    .padding(.horizontal, MuseSpacing.sm)
-                    .frame(height: 28)
-                    .background(MuseColor.mossTint, in: Capsule())
-                    .contentShape(Capsule())
-            }
-            .buttonStyle(.plain)
         }
-        .frame(maxWidth: 700, alignment: .leading)
-        .padding(.horizontal, MuseSpacing.sectionLabel)
-        .padding(.top, 88)
-        .padding(.bottom, MuseSpacing.sectionLabel)
-        .frame(maxWidth: .infinity)
     }
 
     private var actions: some View {
-        HStack(spacing: 2) {
-            action("square.and.pencil", "open the note") { openWindow(id: NoteWindow.id, value: note.id) }
+        LeafActions {
+            LeafAction("square.and.pencil", "open the note") { openWindow(id: NoteWindow.id, value: note.id) }
                 .keyboardShortcut("o")
-            action(copied ? "checkmark" : "square.on.square", copied ? "copied" : "copy the words") { copy() }
+            LeafAction(copied ? "checkmark" : "square.on.square", copied ? "copied" : "copy the words") { copy() }
                 .keyboardShortcut("c")
-            action("trash", "delete this note", tint: MuseColor.clay) { asksToDelete = true }
+            LeafAction("trash", "delete this note", tint: MuseColor.clay) { asksToDelete = true }
                 .keyboardShortcut(.delete)
         }
-        .padding(.horizontal, MuseSpacing.xxs)
-        .frame(height: 40)
-        .glassEffect(.regular.tint(MuseColor.raised.opacity(0.5)), in: .capsule)
-        .padding(MuseSpacing.lg)
-    }
-
-    private func action(_ symbol: String, _ label: String, tint: Color = MuseColor.ink70, run: @escaping () -> Void) -> some View {
-        Button(action: run) {
-            Image(systemName: symbol)
-                .font(MuseFont.symbol(14))
-                .foregroundStyle(tint)
-                .frame(width: 36, height: 34)
-                .contentShape(Rectangle())
-        }
-        .buttonStyle(.plain)
-        .help(label)
-        .accessibilityLabel(label)
     }
 
     private func copy() {

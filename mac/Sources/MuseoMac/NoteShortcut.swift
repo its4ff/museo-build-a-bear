@@ -47,6 +47,7 @@ nonisolated enum NoteShortcut: CaseIterable, Sendable {
         ("copy it", "the whole note"),
         ("name it", "ends the note"),
         ("close", "closes it, kept in the library"),
+        ("new note", "opens another, from the library too"),
     ]
 
     /// The voice commands that work from a note as well, while voice commands are on.
@@ -77,7 +78,19 @@ extension EyeLineTextView {
             window?.toggleFullScreen(nil)
             return isFull ? "back to the window" : "full screen"
         case .minimize:
-            window?.miniaturize(nil)
+            guard let window else { return "minimized" }
+            // A full screen window can't be minimized: leave full screen first, then tuck
+            // it away once it is a window again.
+            if window.styleMask.contains(.fullScreen) {
+                var once: NSObjectProtocol?
+                once = NotificationCenter.default.addObserver(forName: NSWindow.didExitFullScreenNotification, object: window, queue: .main) { [weak window] _ in
+                    if let once { NotificationCenter.default.removeObserver(once) }
+                    MainActor.assumeIsolated { window?.miniaturize(nil) }
+                }
+                window.toggleFullScreen(nil)
+            } else {
+                window.miniaturize(nil)
+            }
             return "minimized"
         case .close:
             window?.performClose(nil)

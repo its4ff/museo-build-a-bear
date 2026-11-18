@@ -10,8 +10,25 @@ enum LibraryOpener {
     /// Asked for before the menu bar icon had appeared: opened as soon as it does.
     private static var waiting = false
 
+    /// The first run, asked for before the menu bar icon had appeared.
+    private static var waitingToWelcome = false
+
+    /// The first run's window.
+    static func welcome() {
+        guard let openWindow else {
+            waitingToWelcome = true
+            return
+        }
+        openWindow(id: WelcomeWindow.id)
+        NSApp.activate()
+    }
+
     static func take(_ action: OpenWindowAction) {
         openWindow = action
+        if waitingToWelcome {
+            waitingToWelcome = false
+            welcome()
+        }
         if waiting {
             waiting = false
             open()
@@ -24,6 +41,14 @@ enum LibraryOpener {
             return
         }
         openWindow(id: LibraryWindow.id)
+        NSApp.activate()
+    }
+
+    /// A new museo note in its own window, like ⌘N. Nothing happens before the menu bar
+    /// icon has appeared, which is a moment after launch.
+    static func newNote() {
+        guard let openWindow else { return }
+        openWindow(id: NoteWindow.id, value: UUID())
         NSApp.activate()
     }
 

@@ -11,20 +11,7 @@ struct YourWordsRow: View {
         Button {
             isOpen.toggle()
         } label: {
-            HStack(spacing: 5) {
-                Text(summary)
-                    .lineLimit(1)
-                Image(systemName: "chevron.right")
-                    .font(MuseFont.symbol(8))
-                    .foregroundStyle(MuseColor.ink55)
-            }
-            .font(MuseType.caption)
-            .foregroundStyle(MuseColor.ink)
-            .padding(.horizontal, 9)
-            .frame(height: 24)
-            .background(MuseColor.composer.opacity(0.75), in: RoundedRectangle(cornerRadius: 7))
-            .overlay(RoundedRectangle(cornerRadius: 7).strokeBorder(MuseColor.hairline, lineWidth: 0.75))
-            .contentShape(Rectangle())
+            PanelChoiceLabel(value: summary, symbol: "chevron.right")
         }
         .buttonStyle(.plain)
         .fixedSize()
@@ -69,10 +56,9 @@ struct YourWordsPopover: View {
                 .foregroundStyle(MuseColor.ink)
                 .tint(MuseColor.moss)
                 .focused($focus, equals: .adding)
-                .padding(.horizontal, 9)
-                .frame(height: 28)
-                .background(MuseColor.composer.opacity(0.8), in: RoundedRectangle(cornerRadius: 8))
-                .overlay(RoundedRectangle(cornerRadius: 8).strokeBorder(MuseColor.hairline, lineWidth: 0.75))
+                .padding(.horizontal, MuseSpacing.xs)
+                .frame(height: PanelMetrics.wordButton + MuseSpacing.xxs)
+                .panelField()
                 .onSubmit {
                     withAnimation(MuseMotion.gentle) { words.add(adding) }
                     adding = ""
@@ -91,7 +77,7 @@ struct YourWordsPopover: View {
         }
         .padding(MuseSpacing.md)
         .frame(width: 290, alignment: .leading)
-        .background { MuseBackground().ignoresSafeArea() }
+        .background { PanelGround() }
         .environment(\.colorScheme, .light)
         .onAppear { focus = .adding }
     }
@@ -111,7 +97,7 @@ struct YourWordsPopover: View {
                 .frame(minWidth: 40)
                 .padding(.horizontal, 10)
                 .frame(height: 26)
-                .background(MuseColor.raised, in: Capsule())
+                .background(DuoColor.paper, in: Capsule())
                 .overlay(Capsule().strokeBorder(MuseColor.moss.opacity(0.6), lineWidth: 1))
                 .onSubmit { finishEditing() }
                 .onExitCommand { editing = nil }
@@ -137,8 +123,8 @@ struct YourWordsPopover: View {
             .padding(.leading, 10)
             .padding(.trailing, 6)
             .frame(height: 26)
-            .background(MuseColor.raised.opacity(0.8), in: Capsule())
-            .overlay(Capsule().strokeBorder(MuseColor.hairline, lineWidth: 0.75))
+            .background(DuoColor.paper.opacity(0.9), in: Capsule())
+            .overlay(Capsule().strokeBorder(MuseColor.hairline, lineWidth: 1))
             .contentShape(Capsule())
             .onHover { inside in
                 if inside { hovered = word } else if hovered == word { hovered = nil }

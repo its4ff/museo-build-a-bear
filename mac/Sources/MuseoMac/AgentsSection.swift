@@ -12,7 +12,7 @@ struct AgentsSection: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
             MuseEyebrow("talk to")
-                .frame(height: 26)
+                .padding(.bottom, MuseSpacing.xs)
             ForEach(commands.agents, id: \.self) { agent in
                 line(agent)
             }
@@ -24,39 +24,42 @@ struct AgentsSection: View {
                 Spacer(minLength: 0)
                 addMenu
             }
-            .frame(height: 26)
+            .frame(height: PanelMetrics.wordButton)
         }
         .task { apps = VoiceCommands.appNames() }
     }
 
     private func line(_ agent: Agent) -> some View {
         // The phrase starts where the commands' phrases do.
-        HStack(spacing: 5) {
+        HStack(spacing: PanelMetrics.keyGap) {
             Group {
                 if let icon = Self.icon(agent.app) {
                     Image(nsImage: icon)
                         .resizable()
-                        .frame(width: 20, height: 20)
+                        .interpolation(.high)
+                        .frame(width: PanelMetrics.appIcon, height: PanelMetrics.appIcon)
                 } else {
                     Image(systemName: "bubble.left")
-                        .font(MuseFont.symbol(12))
+                        .museSymbol(PanelMetrics.more)
                         .foregroundStyle(MuseColor.ink55)
                 }
             }
-            .frame(width: 34, alignment: .leading)
+            // Under the commands' keys, centered on them.
+            .frame(width: PanelMetrics.keyCapWidth, alignment: .center)
             .accessibilityHidden(true)
-            Text("“hey \(agent.say)”")
-                .font(MuseFont.lora(14.5))
-                .foregroundStyle(MuseColor.ink)
-                .lineLimit(1)
-            Text(does(agent))
-                .font(MuseType.caption)
-                .padding(.leading, 3)
-                .foregroundStyle(MuseColor.ink55)
-                .lineLimit(1)
+            HStack(alignment: .firstTextBaseline, spacing: MuseSpacing.xs) {
+                Text("“hey \(agent.say)”")
+                    .font(MuseFont.lora(PanelMetrics.phrase))
+                    .foregroundStyle(MuseColor.ink)
+                    .lineLimit(1)
+                Text(does(agent))
+                    .font(MuseType.caption)
+                    .foregroundStyle(MuseColor.ink55)
+                    .lineLimit(1)
+            }
             Spacer(minLength: 0)
         }
-        .frame(height: 28)
+        .frame(height: PanelMetrics.commandRow)
         .overlay(alignment: .trailing) {
             Button {
                 withAnimation(MuseMotion.gentle) { commands.removeAgent(agent) }
@@ -64,8 +67,8 @@ struct AgentsSection: View {
                 Image(systemName: "xmark")
                     .font(MuseFont.symbol(9))
                     .foregroundStyle(MuseColor.ink55)
-                    .frame(width: 22, height: 22)
-                    .background(MuseColor.ground, in: Circle())
+                    .frame(width: PanelMetrics.wordButton, height: PanelMetrics.wordButton)
+                    .background(DuoColor.paper, in: Circle())
                     .contentShape(Rectangle())
             }
             .buttonStyle(.plain)

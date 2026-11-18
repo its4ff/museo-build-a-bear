@@ -125,7 +125,7 @@ extension NSScreen {
 
 private struct NotchIslandView: View {
     let model: NotchModel
-    private let island = MenuIsland.shared
+    var island = MenuIsland.shared
     private let voice = MenuVoice.shared
 
     /// How far each ear reaches past the notch, and how far the line drops below it.
@@ -133,7 +133,22 @@ private struct NotchIslandView: View {
     /// Room for "typed into Notes" in the right ear.
     private static let noteEar: CGFloat = 132
     private static let wideEar: CGFloat = 150
-    private static let line: CGFloat = 34
+    private static let line: CGFloat = 38
+    /// The words on the line, in Lora.
+    private static let words: CGFloat = 16
+    /// The ring's print in the left ear, and its cells across.
+    private static let mark: CGFloat = 18
+    private static let markDots = 17
+    private static let chipHeight: CGFloat = 20
+    private static let tick: CGFloat = 9
+    /// Your voice: five bars.
+    private static let voiceBar: CGFloat = 3
+    private static let voiceGap: CGFloat = 2.5
+    private static let voiceReach: CGFloat = 13
+    /// How much ink the words still forming carry.
+    private static let forming: Double = 0.42
+    /// Pale ink on the notch's black: the words, the chips and the ring's print.
+    private static let pale = PocketColor.printSand
 
     var body: some View {
         let size = islandSize
@@ -185,15 +200,15 @@ private struct NotchIslandView: View {
             if hasLine {
                 line
                     .padding(.horizontal, MuseSpacing.lg)
-                    .frame(height: Self.line - 6)
+                    .frame(height: Self.line - MuseSpacing.xs)
             }
         }
     }
 
-    /// The dot ring: linen while you talk, a tick when the words land, amber from the ring.
+    /// The ring's print in pale ink, its white light on while you hold.
     private var leftEar: some View {
-        Image(nsImage: Self.ring(island.mark))
-            .frame(width: 16, height: 16)
+        PocketHalftoneRing(size: Self.mark, ink: Self.pale, light: island.isListening ? .white : nil, dots: Self.markDots)
+            .frame(width: Self.mark, height: Self.mark)
             .accessibilityHidden(true)
     }
 
@@ -201,20 +216,29 @@ private struct NotchIslandView: View {
     private var rightEar: some View {
         if island.isListening {
             // Five bars, louder in the middle, never flat: a quiet mic still reads as alive.
-            HStack(spacing: 2.5) {
+            HStack(spacing: Self.voiceGap) {
                 ForEach(Array(voice.levels.enumerated()), id: \.offset) { index, level in
                     Capsule()
-                        .fill(MuseColor.orbHighlight)
-                        .frame(width: 3, height: 3 + 13 * level * [0.55, 0.8, 1, 0.8, 0.55][index])
+                        .fill(Self.pale.opacity(0.9))
+                        .frame(width: Self.voiceBar, height: Self.voiceBar + Self.voiceReach * level * [0.55, 0.8, 1, 0.8, 0.55][index])
                 }
             }
-            .frame(height: 18)
-        } else if let note = island.note {
-            Text(note)
-                .font(MuseType.captionMedium)
-                .foregroundStyle(MuseColor.ground.opacity(0.9))
-                .lineLimit(1)
-                .fixedSize()
+            .frame(height: Self.voiceBar + Self.voiceReach + 2)
+        } else if island.mark == .tick {
+            // The words landed, or the command ran: a tick, and where they went.
+            HStack(spacing: MuseSpacing.xxs + MuseSpacing.xxs / 2) {
+                Image(systemName: "checkmark")
+                    .font(MuseFont.symbol(Self.tick, weight: .semibold))
+                    .foregroundStyle(MuseColor.orbHighlight)
+                    .accessibilityHidden(true)
+                if let note = island.note {
+                    Text(note)
+                        .font(MuseType.captionMedium)
+                        .foregroundStyle(Self.pale.opacity(0.9))
+                        .lineLimit(1)
+                        .fixedSize()
+                }
+            }
         }
     }
 
@@ -224,76 +248,78 @@ private struct NotchIslandView: View {
     private var line: some View {
         switch island.cue ?? island.ran {
         case .command(let command, let said):
-            HStack(spacing: MuseSpacing.xs) {
+            HStack(spacing: Self.chipGap) {
                 chip(VoiceCommands.label(command))
-                Text(said)
-                    .font(MuseFont.lora(15))
-                    .foregroundStyle(MuseColor.ground)
-                    .lineLimit(1)
+                settled(said)
             }
             .transition(.opacity)
         case .ask(let agent, let text, let send):
-            HStack(spacing: MuseSpacing.xs) {
+            HStack(spacing: Self.chipGap) {
                 chip(agent.say)
-                Text(text)
-                    .font(MuseFont.lora(15))
-                    .foregroundStyle(MuseColor.ground)
-                    .lineLimit(1)
+                settled(text)
                     .truncationMode(.head)
                 if send { chip("↩ send") }
             }
         case .typeThenSend(let kept):
-            HStack(spacing: MuseSpacing.xs) {
-                Text(kept)
-                    .font(MuseFont.lora(15))
-                    .foregroundStyle(MuseColor.ground)
-                    .lineLimit(1)
+            HStack(spacing: Self.chipGap) {
+                settled(kept)
                     .truncationMode(.head)
                 chip("↩ send")
             }
         default:
             Text(words)
-                .font(MuseFont.lora(15))
+                .font(MuseFont.lora(Self.words))
                 .lineLimit(1)
                 .truncationMode(.head)
         }
     }
 
-    /// Keys, in a linen outline: what letting go will press.
+    private static let chipGap = MuseSpacing.xs + MuseSpacing.xxs / 2
+
+    /// Their words, settled, in pale ink.
+    private func settled(_ text: String) -> some View {
+        Text(text)
+            .font(MuseFont.lora(Self.words))
+            .foregroundStyle(Self.pale)
+            .lineLimit(1)
+    }
+
+    /// Keys, or who it goes to, in a pale capsule: what letting go will do.
     private func chip(_ text: String) -> some View {
         Text(text)
             .font(MuseType.captionMedium)
-            .foregroundStyle(MuseColor.ground)
-            .padding(.horizontal, 7)
-            .frame(height: 20)
-            .overlay(Capsule().strokeBorder(MuseColor.ground.opacity(0.45), lineWidth: 1))
+            .foregroundStyle(Self.pale)
+            .padding(.horizontal, MuseSpacing.xs)
+            .frame(height: Self.chipHeight)
+            .background(Self.pale.opacity(0.12), in: Capsule(style: .circular))
+            .overlay { Capsule(style: .circular).strokeBorder(Self.pale.opacity(0.4), lineWidth: 1) }
             .fixedSize()
     }
 
-    /// Settled words in linen, the ones still forming fainter.
+    /// Settled words in pale ink, the ones still forming fainter.
     private var words: AttributedString {
         var heard = AttributedString(island.words.heard)
-        heard.foregroundColor = MuseColor.ground
+        heard.foregroundColor = Self.pale
         let gap = island.words.heard.isEmpty || island.words.hearing.isEmpty ? "" : " "
         var hearing = AttributedString(gap + island.words.hearing)
-        hearing.foregroundColor = MuseColor.ground.opacity(0.5)
+        hearing.foregroundColor = Self.pale.opacity(Self.forming)
         return heard + hearing
     }
-
-    /// The ring in cells, drawn once per look.
-    private static func ring(_ mark: MenuIsland.Mark) -> NSImage {
-        switch mark {
-        case .voice: linenRing
-        case .tick: tickRing
-        }
-    }
-
-    private static let linenRing = DotRingIcon.small(.linen)
-    private static let tickRing = DotRingIcon.small(.tick)
 }
 
 #if DEBUG
 extension NotchIsland {
+    /// One island moment for a picture, with its own state so several can be drawn at once:
+    /// `prepare` gets a fresh island to put words on. Hangs from the top of what it's given.
+    static func preview(_ prepare: (MenuIsland) -> Void) -> some View {
+        let model = NotchModel()
+        model.notch = CGSize(width: 204, height: 32)
+        model.isOpen = true
+        let island = MenuIsland()
+        prepare(island)
+        return NotchIslandView(model: model, island: island)
+    }
+
     /// A few island states for the README, each hanging from the top of a strip of linen.
     static func readmeImage() -> CGImage? {
         let model = NotchModel()

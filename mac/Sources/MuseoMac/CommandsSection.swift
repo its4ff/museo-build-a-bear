@@ -1,8 +1,8 @@
 import AppKit
 import SwiftUI
 
-/// The panel's voice commands, two to a row: what each presses in a chip (as the notch island
-/// shows it), then what to say, with a small moss dot for each other way to say it. Pointing at
+/// The panel's voice commands, two to a row: what each presses on a small paper key, then
+/// what to say, with a small moss dot for each other way to say it. Pointing at
 /// one shows those ways under it. Clicking one opens it to change: its phrase, the other ways
 /// to say it, what it does, or to remove it. "add" opens the same line, empty. What it does is
 /// a pick (keys people reach for, an app on this mac, or a shortcut from the Shortcuts app), so
@@ -60,7 +60,7 @@ struct CommandsSection: View {
                 .buttonStyle(.plain)
                 .font(MuseType.caption)
                 .foregroundStyle(MuseColor.moss600)
-                .frame(height: 24)
+                .frame(height: PanelMetrics.wordButton)
             }
             if isAdding {
                 adding
@@ -80,9 +80,9 @@ struct CommandsSection: View {
                 .help(isAdding ? "keep it as it was" : "add a voice command")
             }
             .font(MuseType.caption)
-            .frame(height: 26)
+            .frame(height: PanelMetrics.wordButton)
             AgentsSection()
-                .padding(.top, MuseSpacing.xs)
+                .padding(.top, MuseSpacing.md)
         }
         .padding(.bottom, MuseSpacing.xxs)
         .onAppear {
@@ -108,7 +108,7 @@ struct CommandsSection: View {
     /// The commands two to a row, then "open". The ways to say a command it doesn't lead
     /// with show under the one you point at, drawn over the grid so the rows don't move.
     private var grid: some View {
-        LazyVGrid(columns: [GridItem(.flexible(), spacing: 6, alignment: .leading), GridItem(.flexible(), alignment: .leading)], alignment: .leading, spacing: 2) {
+        LazyVGrid(columns: [GridItem(.flexible(), spacing: 0, alignment: .leading), GridItem(.flexible(), alignment: .leading)], alignment: .leading, spacing: 0) {
             ForEach(shown, id: \.say) { command in
                 cell(command)
                     .anchorPreference(key: HoveredCell.self, value: .bounds) { hovered == command.say.first ? [$0] : [] }
@@ -126,7 +126,7 @@ struct CommandsSection: View {
                     AlsoSay(phrases: phrases)
                         .fixedSize()
                         .frame(width: grid.size.width, alignment: isRight ? .trailing : .leading)
-                        .offset(x: isRight ? frame.maxX - grid.size.width : frame.minX + Self.chipColumn - MuseSpacing.xs, y: frame.maxY + 2)
+                        .offset(x: isRight ? frame.maxX - grid.size.width : frame.minX + PanelMetrics.keyCapWidth - PanelMetrics.keyGap, y: frame.maxY + MuseSpacing.xxs / 2)
                         .transition(.opacity)
                 }
             }
@@ -143,49 +143,61 @@ struct CommandsSection: View {
 
     private static let openPhrase = "open claude"
 
-    /// One command: its chip, what you say, and a dot for each other way to say it.
+    /// One command: its key, what you say, and a dot for each other way to say it.
     private func cell(_ command: VoiceCommands.Command) -> some View {
         let phrase = command.say.first ?? ""
         let others = command.say.dropFirst()
+        return cellLabel(key: VoiceCommands.label(command), phrase: phrase, others: min(others.count, 3), isEditing: editing == command)
+            .onTapGesture { startEditing(command) }
+            .help("click to change it")
+            .onHover { inside in
+                if inside { hovered = phrase } else if hovered == phrase { hovered = nil }
+            }
+            .accessibilityElement(children: .combine)
+            .accessibilityLabel(others.isEmpty ? phrase : "\(phrase), or \(others.joined(separator: ", "))")
+            .accessibilityAddTraits(.isButton)
+            .accessibilityHint("changes it")
+    }
+
+    /// The key, the phrase in Lora, the dots riding high after it; a quiet wash under the
+    /// pointer, a moss line round the one being changed.
+    private func cellLabel(key: String, phrase: String, others: Int, isEditing: Bool = false) -> some View {
         let isHovered = hovered == phrase
-        let isEditing = editing == command
-        return HStack(spacing: 5) {
-            KeyChip(text: VoiceCommands.label(command))
-                .frame(width: Self.chipColumn, alignment: .leading)
+        return HStack(spacing: PanelMetrics.keyGap) {
+            PanelKeyCap(key)
             Text("“\(phrase)”")
-                .font(MuseFont.lora(13.5))
+                .font(MuseFont.lora(PanelMetrics.phrase))
                 .foregroundStyle(MuseColor.ink)
                 .lineLimit(1)
                 .layoutPriority(1)
-            if !others.isEmpty {
-                HStack(spacing: 2) {
-                    ForEach(0..<min(others.count, 3), id: \.self) { _ in
-                        Circle().fill(MuseColor.moss600).frame(width: 3.5, height: 3.5)
+                // Drawn past the quote, so the dots take no room from the phrase.
+                .overlay(alignment: .topTrailing) {
+                    HStack(spacing: PanelMetrics.alternateGap) {
+                        ForEach(0..<others, id: \.self) { _ in
+                            Circle()
+                                .fill(isHovered ? MuseColor.moss600 : MuseColor.moss300)
+                                .frame(width: PanelMetrics.alternateDot, height: PanelMetrics.alternateDot)
+                        }
                     }
+                    .fixedSize()
+                    .alignmentGuide(.trailing) { $0[.leading] - PanelMetrics.alternateGap }
+                    .padding(.top, MuseSpacing.xxs)
+                    .accessibilityHidden(true)
                 }
-                .opacity(isHovered ? 1 : 0.55)
-                .padding(.bottom, 8)
-                .accessibilityHidden(true)
-            }
-            Spacer(minLength: 0)
         }
-        .frame(height: 28)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .frame(height: PanelMetrics.commandRow)
         .padding(.horizontal, MuseSpacing.xxs)
         .background {
-            RoundedRectangle(cornerRadius: 9)
-                .strokeBorder(MuseColor.moss600.opacity(isEditing ? 0.7 : isHovered ? 0.4 : 0), lineWidth: 1)
+            let shape = RoundedRectangle(cornerRadius: PanelMetrics.hoverRadius, style: .continuous)
+            if isEditing {
+                shape.strokeBorder(MuseColor.moss600.opacity(0.7), lineWidth: 1)
+            } else if isHovered {
+                shape.fill(DuoColor.hover)
+            }
         }
         .padding(.horizontal, -MuseSpacing.xxs)
         .contentShape(Rectangle())
-        .onTapGesture { startEditing(command) }
-        .help("click to change it")
-        .onHover { inside in
-            if inside { hovered = phrase } else if hovered == phrase { hovered = nil }
-        }
-        .accessibilityElement(children: .combine)
-        .accessibilityLabel(others.isEmpty ? phrase : "\(phrase), or \(others.joined(separator: ", "))")
-        .accessibilityAddTraits(.isButton)
-        .accessibilityHint("changes it")
     }
 
     /// "open" and any app's name ("open claude"): always there, nothing to add. A click shows
@@ -194,31 +206,8 @@ struct CommandsSection: View {
         Button {
             showsApps.toggle()
         } label: {
-            HStack(spacing: 5) {
-                KeyChip(text: "app")
-                    .frame(width: Self.chipColumn, alignment: .leading)
-                Text("“open claude”")
-                    .font(MuseFont.lora(13.5))
-                    .foregroundStyle(MuseColor.ink)
-                    .lineLimit(1)
-                    .layoutPriority(1)
-                    // Its one dot ("switch to"), drawn past the quote so it takes no room.
-                    .overlay(alignment: .topTrailing) {
-                        Circle().fill(MuseColor.moss600).frame(width: 3.5, height: 3.5)
-                            .opacity(hovered == Self.openPhrase ? 1 : 0.55)
-                            .offset(x: 6, y: 5)
-                            .accessibilityHidden(true)
-                    }
-                Spacer(minLength: 0)
-            }
-            .frame(height: 28)
-            .padding(.horizontal, MuseSpacing.xxs)
-            .background {
-                RoundedRectangle(cornerRadius: 9)
-                    .strokeBorder(MuseColor.moss600.opacity(hovered == Self.openPhrase ? 0.4 : 0), lineWidth: 1)
-            }
-            .padding(.horizontal, -MuseSpacing.xxs)
-            .contentShape(Rectangle())
+            // Its one dot is "switch to".
+            cellLabel(key: "app", phrase: Self.openPhrase, others: 1)
         }
         .buttonStyle(.plain)
         .onHover { inside in
@@ -230,9 +219,6 @@ struct CommandsSection: View {
             AppsList(apps: apps)
         }
     }
-
-    /// Wide enough for ⌘⇥ and "app"; a rarer, longer chip just runs wider.
-    private static let chipColumn: CGFloat = 34
 
     // MARK: - Adding or changing one
 
@@ -248,10 +234,9 @@ struct CommandsSection: View {
                     .foregroundStyle(MuseColor.ink)
                     .tint(MuseColor.moss)
                     .focused($typing)
-                    .padding(.horizontal, 8)
-                    .frame(height: 24)
-                    .background(MuseColor.composer.opacity(0.75), in: RoundedRectangle(cornerRadius: 7))
-                    .overlay(RoundedRectangle(cornerRadius: 7).strokeBorder(MuseColor.hairline, lineWidth: 0.75))
+                    .padding(.horizontal, MuseSpacing.xs)
+                    .frame(height: PanelMetrics.field)
+                    .panelField()
                     .onSubmit(save)
                     .onExitCommand(perform: close)
                 doesPicker
@@ -259,7 +244,7 @@ struct CommandsSection: View {
                     Image(systemName: "checkmark")
                         .font(MuseFont.symbol(10))
                         .foregroundStyle(canAdd ? MuseColor.ground : MuseColor.ink55)
-                        .frame(width: 24, height: 24)
+                        .frame(width: PanelMetrics.field, height: PanelMetrics.field)
                         .background(canAdd ? AnyShapeStyle(MuseColor.primaryGradient) : AnyShapeStyle(MuseColor.ink.opacity(0.06)), in: Circle())
                 }
                 .buttonStyle(.plain)
@@ -321,8 +306,7 @@ struct CommandsSection: View {
             }
         }
         .padding(MuseSpacing.sm)
-        .background(MuseColor.raised.opacity(0.7), in: RoundedRectangle(cornerRadius: MuseRadius.control))
-        .overlay(RoundedRectangle(cornerRadius: MuseRadius.control).strokeBorder(MuseColor.hairline, lineWidth: 0.75))
+        .duoTileGlass(cornerRadius: MuseRadius.control)
     }
 
     private var canAdd: Bool {
@@ -363,11 +347,10 @@ struct CommandsSection: View {
             }
             .font(MuseType.caption)
             .foregroundStyle(does == nil ? MuseColor.ink55 : MuseColor.ink)
-            .padding(.horizontal, 8)
-            .frame(height: 24)
+            .padding(.horizontal, MuseSpacing.xs)
+            .frame(height: PanelMetrics.field)
             .frame(maxWidth: 120)
-            .background(MuseColor.composer.opacity(0.75), in: RoundedRectangle(cornerRadius: 7))
-            .overlay(RoundedRectangle(cornerRadius: 7).strokeBorder(MuseColor.hairline, lineWidth: 0.75))
+            .panelField()
         }
         .menuStyle(.button)
         .buttonStyle(.plain)
@@ -485,39 +468,30 @@ private struct HoveredCell: PreferenceKey {
 private struct AlsoSay: View {
     let phrases: [String]
 
+    private static let shape = RoundedRectangle(cornerRadius: MuseRadius.control, style: .continuous)
+
     var body: some View {
-        VStack(alignment: .leading, spacing: 2) {
+        VStack(alignment: .leading, spacing: MuseSpacing.xxs / 2) {
             MuseEyebrow("also say")
-                .padding(.bottom, 1)
+                .padding(.bottom, MuseSpacing.xxs / 2)
             ForEach(phrases, id: \.self) { phrase in
                 Text("“\(phrase)”")
-                    .font(MuseFont.lora(14))
+                    .font(MuseFont.lora(PanelMetrics.phrase))
                     .foregroundStyle(MuseColor.ink)
             }
         }
         .padding(.horizontal, MuseSpacing.sm)
         .padding(.vertical, MuseSpacing.xs)
-        .background(MuseColor.raised, in: RoundedRectangle(cornerRadius: MuseRadius.control))
-        .overlay(RoundedRectangle(cornerRadius: MuseRadius.control).strokeBorder(MuseColor.hairline, lineWidth: 0.75))
-        .shadow(color: MuseColor.moss900.opacity(0.14), radius: 12, y: 6)
-    }
-}
-
-/// What a command presses, in an outlined capsule: the notch island's chip, on paper.
-private struct KeyChip: View {
-    let text: String
-
-    var body: some View {
-        Text(text)
-            .font(MuseType.captionMedium)
-            .foregroundStyle(MuseColor.ink70)
-            .lineLimit(1)
-            .padding(.horizontal, 6)
-            .frame(height: 20)
-            // Circular ends: the default style draws a flat strip at each end of so short a
-            // capsule, which reads as a little bar on either side.
-            .overlay(Capsule(style: .circular).strokeBorder(MuseColor.ink.opacity(0.22), lineWidth: 1))
-            .fixedSize()
+        // Warm paper with the glass's light top edge: it sits over the rows below, so it
+        // stays opaque enough to read on.
+        .background(DuoColor.cream, in: Self.shape)
+        .overlay {
+            Self.shape.strokeBorder(
+                LinearGradient(colors: [DuoColor.edge, DuoColor.tileEdge], startPoint: .top, endPoint: .bottom),
+                lineWidth: 1
+            )
+        }
+        .museElevation(.e2)
     }
 }
 
@@ -560,7 +534,7 @@ private struct AppsList: View {
         }
         .padding(MuseSpacing.md)
         .frame(width: 250, alignment: .leading)
-        .background { MuseBackground().ignoresSafeArea() }
+        .background { PanelGround() }
         .environment(\.colorScheme, .light)
     }
 }

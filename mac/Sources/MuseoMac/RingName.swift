@@ -37,21 +37,28 @@ struct RingNameField: View {
     @Binding var isEditing: Bool
     /// The ring's line is hovered: the whole line, so the pencil stays while you reach for it.
     var showsPencil = false
+    /// How the name is set: Lora on paper by default; the panel's pill sets it as a label.
+    var font: Font = MuseFont.lora(16)
+    var ink: Color = MuseColor.ink
+    /// The cursor, and the thin line under the name while typing.
+    var accent: Color = MuseColor.moss
+    /// What stands in before a ring is set up.
+    var unnamed = "your ring."
     private let names = RingNames.shared
     @State private var text = ""
     @FocusState private var isTyping: Bool
 
     private var nickname: String? { names.nickname(for: ringName) }
-    private var shown: String { nickname ?? ringName ?? "your ring." }
+    private var shown: String { nickname ?? ringName ?? unnamed }
 
     var body: some View {
         HStack(spacing: MuseSpacing.xxs) {
             if isEditing, let ringName {
                 TextField(ringName, text: $text)
                     .textFieldStyle(.plain)
-                    .font(MuseFont.lora(16))
-                    .foregroundStyle(MuseColor.ink)
-                    .tint(MuseColor.moss)
+                    .font(font)
+                    .foregroundStyle(ink)
+                    .tint(accent)
                     .focused($isTyping)
                     .onSubmit { save(ringName) }
                     .onExitCommand { isEditing = false }
@@ -66,8 +73,8 @@ struct RingNameField: View {
                     .accessibilityLabel("the ring's name")
             } else {
                 Text(shown)
-                    .font(MuseFont.lora(16))
-                    .foregroundStyle(MuseColor.ink)
+                    .font(font)
+                    .foregroundStyle(ink)
                     .lineLimit(1)
                     .onTapGesture(count: 2) { if ringName != nil { isEditing = true } }
                     .help(nickname != nil ? "on the ring it's \(ringName ?? "")" : "")
@@ -94,7 +101,7 @@ struct RingNameField: View {
         // A thin moss line while typing, so the name reads as a field.
         .overlay(alignment: .bottom) {
             if isEditing {
-                Rectangle().fill(MuseColor.moss.opacity(0.6)).frame(height: 1)
+                Rectangle().fill(accent.opacity(0.6)).frame(height: 1)
             }
         }
     }

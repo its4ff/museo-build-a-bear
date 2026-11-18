@@ -29,6 +29,13 @@ final class YourWords {
         }
     }
 
+    #if DEBUG
+    /// Made-up words to draw instead of the saved ones, for pictures. Nothing is written.
+    func preview(_ words: [String]) {
+        self.words = words
+    }
+    #endif
+
     // MARK: - Changing
 
     /// Adds each word in `text`, split at commas and new lines. A word already here (in any

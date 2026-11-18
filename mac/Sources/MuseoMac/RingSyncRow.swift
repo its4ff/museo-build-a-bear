@@ -81,7 +81,7 @@ struct RingSyncRow: View {
         .padding(.leading, MuseSpacing.sm)
         .padding(.trailing, MuseSpacing.xs)
         .padding(.vertical, MuseSpacing.xs)
-        .museInsetSurface()
+        .duoTileGlass(cornerRadius: MuseRadius.control)
     }
 
     private var bringingIn: some View {
@@ -118,7 +118,7 @@ struct RingSyncRow: View {
         }
         .padding(.horizontal, MuseSpacing.sm)
         .padding(.vertical, MuseSpacing.xs)
-        .museInsetSurface()
+        .duoTileGlass(cornerRadius: MuseRadius.control)
     }
 
     private func finished(_ line: String) -> some View {
@@ -138,7 +138,7 @@ struct RingSyncRow: View {
         }
         .padding(.horizontal, MuseSpacing.sm)
         .frame(minHeight: 36)
-        .museInsetSurface()
+        .duoTileGlass(cornerRadius: MuseRadius.control)
     }
 
     // MARK: - Time

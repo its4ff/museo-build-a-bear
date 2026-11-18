@@ -18,7 +18,6 @@ struct MusesPickedPane: View {
             page
         }
         .scrollIndicators(.hidden)
-        .background { MuseBackground() }
         .overlay(alignment: .topTrailing) { actions }
         .confirmationDialog("delete \(ids.count) muses?", isPresented: $asksToDelete) {
             Button("delete", role: .destructive) { MacLibrary.shared.remove(ids) }
@@ -33,43 +32,37 @@ struct MusesPickedPane: View {
     var still: some View {
         page
             .frame(maxHeight: .infinity, alignment: .top)
-            .background { MuseBackground() }
+            .background { PocketGround() }
             .overlay(alignment: .topTrailing) { actions }
     }
     #endif
 
     private var page: some View {
-        VStack(alignment: .leading, spacing: MuseSpacing.xl) {
-            VStack(alignment: .leading, spacing: MuseSpacing.sm) {
-                Text(eyebrow)
-                    .font(MuseFont.mono(.caption))
-                    .foregroundStyle(MuseColor.ink55)
-                Text("\(ids.count) muses.")
-                    .font(MuseType.display)
-                    .tracking(MuseType.displayTracking)
-                    .foregroundStyle(MuseColor.ink)
-            }
-            VStack(alignment: .leading, spacing: MuseSpacing.lg) {
-                ForEach(muses) { muse in
-                    VStack(alignment: .leading, spacing: MuseSpacing.xxs) {
-                        Text("\(muse.createdAt.museClock) · \(muse.meta)")
-                            .font(MuseType.caption)
-                            .foregroundStyle(MuseColor.ink55)
-                        Text(muse.words.map { $0.isEmpty ? "blank muse" : $0 } ?? "hearing it…")
-                            .font(muse.words?.isEmpty == false ? MuseFont.lora(17) : MuseFont.loraItalic(17))
-                            .foregroundStyle(muse.words?.isEmpty == false ? MuseColor.ink : MuseColor.ink55)
-                            .lineLimit(4)
-                            .fixedSize(horizontal: false, vertical: true)
+        LeafColumn {
+            VStack(alignment: .leading, spacing: MuseSpacing.section) {
+                VStack(alignment: .leading, spacing: MuseSpacing.md) {
+                    LeafMono(eyebrow)
+                    LeafTitle("\(ids.count) muses.")
+                }
+                VStack(alignment: .leading, spacing: MuseSpacing.lg) {
+                    ForEach(muses) { muse in
+                        let hasWords = muse.words?.isEmpty == false
+                        VStack(alignment: .leading, spacing: MuseSpacing.xxs) {
+                            Text("\(muse.createdAt.museClock) · \(muse.meta)")
+                                .font(MuseType.caption)
+                                .foregroundStyle(MuseColor.ink55)
+                            Text(muse.words.map { $0.isEmpty ? "blank muse" : $0 } ?? "hearing it…")
+                                .font(hasWords ? MuseFont.lora(LibraryMetrics.pickedWords) : MuseFont.loraItalic(LibraryMetrics.pickedWords))
+                                .foregroundStyle(hasWords ? MuseColor.ink : MuseColor.ink55)
+                                .lineLimit(4)
+                                .fixedSize(horizontal: false, vertical: true)
+                        }
                     }
                 }
+                LeafFoot(left: "copied oldest first, a line between each", keys: LibraryWords.pickedKeys)
+                    .padding(.top, MuseSpacing.xs)
             }
-            footer
         }
-        .frame(maxWidth: 700, alignment: .leading)
-        .padding(.horizontal, MuseSpacing.sectionLabel)
-        .padding(.top, 88)
-        .padding(.bottom, MuseSpacing.sectionLabel)
-        .frame(maxWidth: .infinity)
     }
 
     /// "picked · 12:31 in all".
@@ -78,48 +71,17 @@ struct MusesPickedPane: View {
         return "picked · \(total.museDuration) in all"
     }
 
-    private var footer: some View {
-        HStack {
-            Text("copied oldest first, a line between each")
-                .font(MuseType.caption)
-                .foregroundStyle(MuseColor.ink55)
-            Spacer()
-            Text("⌘C copy all · ⌘⌫ delete · esc let go")
-                .font(MuseFont.mono(.caption2))
-                .foregroundStyle(MuseColor.ink55)
-        }
-        .padding(.top, MuseSpacing.md)
-        .overlay(alignment: .top) { Rectangle().fill(MuseColor.hairline).frame(height: 1) }
-    }
-
     // MARK: - Actions
 
     private var actions: some View {
-        HStack(spacing: 2) {
-            action(copied ? "checkmark" : "square.on.square", copied ? "copied" : "copy all their words") { copy() }
+        LeafActions {
+            LeafAction(copied ? "checkmark" : "square.on.square", copied ? "copied" : "copy all their words") { copy() }
                 .keyboardShortcut("c")
-            action("xmark", "let them go") { MacLibrary.shared.picked = [] }
+            LeafAction("xmark", "let them go") { MacLibrary.shared.picked = [] }
                 .keyboardShortcut(.escape, modifiers: [])
-            action("trash", "delete these muses", tint: MuseColor.clay) { asksToDelete = true }
+            LeafAction("trash", "delete these muses", tint: MuseColor.clay) { asksToDelete = true }
                 .keyboardShortcut(.delete)
         }
-        .padding(.horizontal, MuseSpacing.xxs)
-        .frame(height: 40)
-        .glassEffect(.regular.tint(MuseColor.raised.opacity(0.5)), in: .capsule)
-        .padding(MuseSpacing.lg)
-    }
-
-    private func action(_ symbol: String, _ label: String, tint: Color = MuseColor.ink70, run: @escaping () -> Void) -> some View {
-        Button(action: run) {
-            Image(systemName: symbol)
-                .font(MuseFont.symbol(14))
-                .foregroundStyle(tint)
-                .frame(width: 36, height: 34)
-                .contentShape(Rectangle())
-        }
-        .buttonStyle(.plain)
-        .help(label)
-        .accessibilityLabel(label)
     }
 
     private func copy() {

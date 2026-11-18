@@ -232,7 +232,12 @@ final class LocalSpeech {
     /// Your words as a boosting session, made again when they change. Nil with no words, or
     /// before the checking model is here (it's fetched now, for next time).
     private func boosting() async -> VocabularyBoostingSession? {
-        let words = YourWords.shared.words
+        // Your words, and the names voice commands answer to that a model wouldn't know
+        // (the apps you talk to, commands you added), so those are heard right too.
+        var words = YourWords.shared.words
+        for name in VoiceCommands.shared.vocabulary where !words.contains(where: { $0.caseInsensitiveCompare(name) == .orderedSame }) {
+            words.append(name)
+        }
         guard !words.isEmpty else { return nil }
         if let booster, booster.words == words { return booster.session }
         do {

@@ -179,6 +179,51 @@ struct EyeLineEditor: NSViewRepresentable {
 final class NoteScrollView: NSScrollView {
     var onScroll: (() -> Void)?
 
+    // MARK: - Full screen
+
+    /// How fast the words leave as the window starts to grow or shrink, and how gently
+    /// they come back once it has settled.
+    private static let leave: TimeInterval = 0.12
+    private static let arrive: TimeInterval = 0.5
+    private static let giveUp: TimeInterval = 2.5
+    private var watching: [NSObjectProtocol] = []
+
+    /// Going to full screen and back, macOS stretches a picture of the window, and the page
+    /// would jump to its new middle at the end. So the words step out for the move and
+    /// settle back in at the eye line of the new size.
+    override func viewDidMoveToWindow() {
+        super.viewDidMoveToWindow()
+        watching.forEach(NotificationCenter.default.removeObserver)
+        watching = []
+        guard let window else { return }
+        let center = NotificationCenter.default
+        for name in [NSWindow.willEnterFullScreenNotification, NSWindow.willExitFullScreenNotification] {
+            watching.append(center.addObserver(forName: name, object: window, queue: .main) { [weak self] _ in
+                MainActor.assumeIsolated { self?.fade(to: 0, over: Self.leave) }
+                // Should the move never finish, the words still come back.
+                DispatchQueue.main.asyncAfter(deadline: .now() + Self.giveUp) {
+                    if self?.alphaValue == 0 { self?.fade(to: 1, over: Self.arrive) }
+                }
+            })
+        }
+        for name in [NSWindow.didEnterFullScreenNotification, NSWindow.didExitFullScreenNotification] {
+            watching.append(center.addObserver(forName: name, object: window, queue: .main) { [weak self] _ in
+                MainActor.assumeIsolated {
+                    (self?.documentView as? EyeLineTextView)?.centerCaretLine()
+                    self?.fade(to: 1, over: Self.arrive)
+                }
+            })
+        }
+    }
+
+    private func fade(to alpha: CGFloat, over seconds: TimeInterval) {
+        NSAnimationContext.runAnimationGroup { context in
+            context.duration = seconds
+            context.timingFunction = CAMediaTimingFunction(name: .easeInEaseOut)
+            animator().alphaValue = alpha
+        }
+    }
+
     override func scrollWheel(with event: NSEvent) {
         onScroll?()
         super.scrollWheel(with: event)

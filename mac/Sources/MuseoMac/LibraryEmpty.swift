@@ -1,6 +1,6 @@
 import SwiftUI
 
-/// No muse open: the orb and two lines.
+/// No muse open: the orb and two lines, on the library's dune.
 struct LibraryEmpty: View {
     let hasMuses: Bool
 
@@ -15,6 +15,5 @@ struct LibraryEmpty: View {
                 .foregroundStyle(MuseColor.ink70)
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
-        .background { MuseBackground() }
     }
 }

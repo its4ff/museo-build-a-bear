@@ -2,11 +2,11 @@ import AppKit
 import MuseoKit
 import SwiftUI
 
-/// The panel the menu bar icon opens, on museo's own paper like the library: the ring in one
-/// line with its one action, the rows that matter (typing, the speech model, voice commands
-/// and their list), the last few muses, and a quiet foot. Everything rarer about
-/// the ring (forget it) is a right click on its line; recordings waiting on the ring get their
-/// own row under it (`RingSyncRow`), and come over only when you click it.
+/// The panel the menu bar icon opens, on the dune like the library: the ring as its pill, with
+/// what it can be told behind the glyph beside it (rename, disconnect, forget), the rows that
+/// matter (typing, the speech model, your words, voice commands and their list), the last two
+/// muses, and a quiet foot. Recordings waiting on the ring get their own row under the pill
+/// (`RingSyncRow`), and come over only when you click it. Type and space do the dividing.
 struct MenuPanel: View {
     @Environment(\.openWindow) private var openWindow
     @State private var dictation = Dictation.shared
@@ -15,7 +15,6 @@ struct MenuPanel: View {
     @State private var model = MacSpeech.model
     @State private var language: String?
     @State private var isRenaming = false
-    @State private var isRingHovered = false
     private let library = MacLibrary.shared
     private let watch = RingWatch.shared
     private var ring: RingStatus {
@@ -34,21 +33,19 @@ struct MenuPanel: View {
         VStack(alignment: .leading, spacing: 0) {
             ringLine
                 .padding(.bottom, MuseSpacing.sm)
-            MuseHairline()
             controls
-                .padding(.vertical, MuseSpacing.xxs)
-            MuseHairline()
             recent
-                .padding(.vertical, MuseSpacing.xs)
-            MuseHairline()
+                .padding(.top, MuseSpacing.lg)
             footer
                 .padding(.top, MuseSpacing.sm)
         }
-        .padding(MuseSpacing.md)
-        .frame(width: 310)
-        // museo's own paper (linen wash and grain), as in the library. The menu bar's glass
-        // follows a dark mac, so the panel brings its own and stays light.
-        .background { MuseBackground().ignoresSafeArea() }
+        .padding(.horizontal, MuseSpacing.md)
+        .padding(.top, MuseSpacing.sm)
+        .padding(.bottom, MuseSpacing.xs)
+        .frame(width: PanelMetrics.width)
+        // The dune, quiet, as in the library. The menu bar's glass follows a dark mac, so the
+        // panel brings its own paper and stays light.
+        .background { PanelGround() }
         .background(PanelWindowReader())
         .preferredColorScheme(.light)
         .task { language = await MacSpeech.language() }
@@ -58,35 +55,159 @@ struct MenuPanel: View {
 
     // MARK: - The ring
 
+    /// How the ring shows at the panel's top: the moss pill, or the plain line it had before
+    /// (the mark, its name, one status line), with disconnect in sight or in the menu.
+    enum RingLineStyle {
+        case pill, line, quietLine
+    }
+
+    static var ringLineStyle = RingLineStyle.line
+
+    /// The ring as a plain line on the paper: the halftone mark, its name in Lora, one
+    /// status line under it. `showsDisconnect` keeps the disconnect capsule; without it,
+    /// everything is in the ellipsis.
+    private func plainLine(showsDisconnect: Bool) -> some View {
+        HStack(spacing: MuseSpacing.sm) {
+            PocketHalftoneRing(
+                size: DuoMetrics.pillMark + MuseSpacing.xxs,
+                ink: ring.isLinked ? MuseColor.moss : MuseColor.ink55,
+                light: ring.isLinked && watch.recordingSince != nil ? .amber : nil,
+                dots: DuoMetrics.pillMarkDots
+            )
+            .accessibilityHidden(true)
+            VStack(alignment: .leading, spacing: 1) {
+                RingNameField(ringName: ring.advertisedName, isEditing: $isRenaming)
+                Text(status)
+                    .font(MuseType.caption)
+                    .foregroundStyle(MuseColor.ink55)
+                    .monospacedDigit()
+                    .lineLimit(1)
+            }
+            .layoutPriority(1)
+            Spacer(minLength: 0)
+            if showsDisconnect, ring.isLinked {
+                // One capsule: disconnect, and the rarer things behind its chevron.
+                HStack(spacing: 0) {
+                    Button { actions.disconnect() } label: {
+                        Text("disconnect")
+                            .font(MuseType.captionMedium)
+                            .foregroundStyle(MuseColor.ink70)
+                            .padding(.leading, MuseSpacing.sm)
+                            .padding(.trailing, MuseSpacing.xs)
+                            .frame(height: MuseSpacing.section)
+                            .contentShape(Rectangle())
+                    }
+                    .buttonStyle(.plain)
+                    Rectangle()
+                        .fill(MuseColor.hairline)
+                        .frame(width: 1, height: MuseSpacing.row)
+                        .accessibilityHidden(true)
+                    Menu {
+                        ringMenu
+                    } label: {
+                        Image(systemName: "chevron.down")
+                            .museSymbol(MuseSpacing.xs, weight: .semibold)
+                            .foregroundStyle(MuseColor.ink55)
+                            .padding(.leading, MuseSpacing.xs)
+                            .padding(.trailing, MuseSpacing.sm - MuseSpacing.xxs / 2)
+                            .frame(height: MuseSpacing.section)
+                            .contentShape(Rectangle())
+                    }
+                    .menuStyle(.button)
+                    .buttonStyle(.plain)
+                    .menuIndicator(.hidden)
+                    .fixedSize()
+                    .help("rename, forget, bring in")
+                    .accessibilityLabel("more for this ring")
+                }
+                .duoControlGlass()
+                .fixedSize()
+            } else if ring.link != .notSetUp {
+                Menu {
+                    ringMenu
+                } label: {
+                    Image(systemName: "ellipsis")
+                        .museSymbol(PanelMetrics.more, weight: .semibold)
+                        .foregroundStyle(MuseColor.ink70)
+                        .frame(width: PanelMetrics.moreBox, height: MuseSpacing.section)
+                        .contentShape(Rectangle())
+                }
+                .menuStyle(.button)
+                .buttonStyle(.plain)
+                .menuIndicator(.hidden)
+                .fixedSize()
+                .help("rename, disconnect, forget")
+                .accessibilityLabel("more for this ring")
+            }
+        }
+    }
+
     private var ringLine: some View {
         VStack(alignment: .leading, spacing: MuseSpacing.xs) {
-            HStack(spacing: MuseSpacing.sm) {
-                Image(nsImage: DotRingIcon.small(ring.showsCharging ? .charging : ring.isLinked ? .moss : .faint, size: 20))
-                    .accessibilityHidden(true)
-                VStack(alignment: .leading, spacing: 1) {
-                    RingNameField(ringName: ring.advertisedName, isEditing: $isRenaming, showsPencil: isRingHovered)
-                    Text(status)
-                        .font(MuseType.caption)
-                        .foregroundStyle(MuseColor.ink55)
-                        .monospacedDigit()
+            if Self.ringLineStyle != .pill {
+                plainLine(showsDisconnect: Self.ringLineStyle == .line)
+            } else {
+            HStack(spacing: MuseSpacing.xxs) {
+                PanelRingPill(state: pillState, ringName: ring.advertisedName, detail: pillDetail, spoken: status, isRenaming: $isRenaming)
+                if ring.link != .notSetUp {
+                    // Everything the ring can be told, in sight: nothing is right click only.
+                    Menu {
+                        ringMenu
+                    } label: {
+                        Image(systemName: "ellipsis")
+                            .museSymbol(PanelMetrics.more, weight: .semibold)
+                            .foregroundStyle(MuseColor.ink70)
+                            .frame(width: PanelMetrics.moreBox, height: DuoMetrics.bar)
+                            .contentShape(Rectangle())
+                    }
+                    .menuStyle(.button)
+                    .buttonStyle(.plain)
+                    .menuIndicator(.hidden)
+                    .fixedSize()
+                    .help("rename, disconnect, forget")
+                    .accessibilityLabel("more for this ring")
                 }
-                // The name gets the room first; the gap before the pill gives way.
-                .layoutPriority(1)
-                Spacer(minLength: 0)
-                ringAction
             }
+            .padding(.trailing, ring.link != .notSetUp ? -MuseSpacing.xs : 0)
+            }
+            ringHint
             RingSyncRow(ring: ring, actions: actions) { open(nil) }
-                .padding(.top, MuseSpacing.xxs)
             if watch.forgotRing, ring.link == .notSetUp {
                 forgotNote
             }
         }
-        .contentShape(Rectangle())
-        .onHover { isRingHovered = $0 }
-        .contextMenu { ringMenu }
+        .contextMenu {
+            ringMenu
+            Divider()
+            Button("quit museo") { NSApp.terminate(nil) }
+        }
     }
 
-    /// "linked · 91%", "charging · 79%", "recording on the ring · 0:42", "away". Bringing in shows in `RingSyncRow`.
+    /// What the pill is filled with: the ring's state, and amber while it records to itself.
+    private var pillState: PocketRingState {
+        if ring.isLinked, watch.recordingSince != nil { return .memory }
+        return PocketRingState(ring)
+    }
+
+    /// The pill's one quiet word: "82%", "recording · 0:42", "away".
+    private var pillDetail: String? {
+        switch ring.link {
+        case .linked:
+            if let since = watch.recordingSince {
+                return "recording · \(watch.now.timeIntervalSince(since).museDuration)"
+            }
+            if ring.isSyncing { return "bringing in…" }
+            guard let battery = ring.battery else { return "linked" }
+            return "\(battery)%"
+        case .joining: return "joining…"
+        case .away: return ring.userDisconnected ? "disconnected" : "away"
+        case .bluetoothOff: return "bluetooth is off"
+        case .notSetUp: return nil
+        }
+    }
+
+    /// The whole of it, for VoiceOver: "linked · 91%", "charging · 79%",
+    /// "recording on the ring · 0:42", "away". Bringing in shows in `RingSyncRow`.
     private var status: String {
         switch ring.link {
         case .linked:
@@ -100,6 +221,38 @@ struct MenuPanel: View {
         case .away: return ring.userDisconnected ? "disconnected" : "away · click it to wake it"
         case .bluetoothOff: return "bluetooth is off"
         case .notSetUp: return ring.isSettingUp ? "looking for rings nearby…" : "not set up on this mac"
+        }
+    }
+
+    /// Under the pill when the ring isn't linked: what to do about it, and the one action
+    /// its state calls for.
+    @ViewBuilder
+    private var ringHint: some View {
+        let hint: String? = switch ring.link {
+        case .away where !ring.userDisconnected: "click it to wake it"
+        case .notSetUp: ring.isSettingUp ? "looking for rings nearby…" : "not set up on this mac"
+        default: nil
+        }
+        let action: (title: String, run: () -> Void)? = switch ring.link {
+        case .away, .joining: ("look for it", { actions.lookForIt() })
+        case .notSetUp where !ring.isSettingUp: ("set up", { watch.setUp() })
+        default: nil
+        }
+        if hint != nil || action != nil {
+            HStack(spacing: MuseSpacing.sm) {
+                if let hint {
+                    Text(hint)
+                        .font(MuseType.caption)
+                        .foregroundStyle(MuseColor.ink55)
+                    Spacer(minLength: 0)
+                }
+                if let action {
+                    wordButton(action.title, run: action.run)
+                }
+                if hint == nil { Spacer(minLength: 0) }
+            }
+            .padding(.leading, MuseSpacing.sm)
+            .padding(.trailing, MuseSpacing.xxs)
         }
     }
 
@@ -119,94 +272,40 @@ struct MenuPanel: View {
                 Text("unpair it in system settings › bluetooth")
                     .font(MuseType.captionMedium)
                     .foregroundStyle(MuseColor.moss600)
-                    .frame(minHeight: 22)
+                    .frame(minHeight: PanelMetrics.wordButton)
                     .contentShape(Rectangle())
             }
             .buttonStyle(.plain)
         }
-        .padding(.leading, 32)
+        .padding(.leading, MuseSpacing.sm)
     }
 
-    /// The one action the ring's state calls for.
-    @ViewBuilder
-    private var ringAction: some View {
-        switch ring.link {
-        case .linked:
-            disconnectPill
-        case .away, .joining:
-            ghost("look for it") { actions.lookForIt() }
-        case .notSetUp where !ring.isSettingUp:
-            ghost("set up") { watch.setUp() }
-        default:
-            EmptyView()
-        }
-    }
-
+    /// What the ring can be told, for the glyph beside the pill and for a right click.
     @ViewBuilder
     private var ringMenu: some View {
         if ring.isLinked {
             Button("bring in everything on the ring") { actions.bringInEverything() }
         }
         if ring.link != .notSetUp {
-            Divider()
             if ring.advertisedName != nil {
                 Button("rename the ring") { isRenaming = true }
             }
+            // Beside the chevron already, when the capsule shows it.
+            if ring.isLinked, Self.ringLineStyle != .line {
+                Button("disconnect") { actions.disconnect() }
+            }
             Button("forget this ring") { watch.forget() }
         }
-        Divider()
-        Button("quit museo") { NSApp.terminate(nil) }
     }
 
-    /// "disconnect", with forgetting the ring one click away in its dropdown: rare enough
-    /// not to need its own button.
-    private var disconnectPill: some View {
-        HStack(spacing: 0) {
-            Button { actions.disconnect() } label: {
-                Text("disconnect")
-                    .font(MuseType.captionMedium)
-                    .foregroundStyle(MuseColor.ink70)
-                    .padding(.leading, 10)
-                    .padding(.trailing, 7)
-                    .frame(height: 26)
-                    .contentShape(Rectangle())
-            }
-            .buttonStyle(MusePressStyle())
-            Rectangle()
-                .fill(MuseColor.ink.opacity(0.14))
-                .frame(width: 0.75, height: 14)
-            Menu {
-                Button("forget this ring") { watch.forget() }
-            } label: {
-                Image(systemName: "chevron.down")
-                    .font(MuseType.caption)
-                    .imageScale(.small)
-                    .foregroundStyle(MuseColor.ink55)
-                    .padding(.leading, 6)
-                    .padding(.trailing, 9)
-                    .frame(height: 26)
-                    .contentShape(Rectangle())
-            }
-            .menuStyle(.button)
-            .buttonStyle(.plain)
-            .menuIndicator(.hidden)
-            .fixedSize()
-            .accessibilityLabel("more for this ring")
-        }
-        .overlay(Capsule().strokeBorder(MuseColor.ink.opacity(0.14), lineWidth: 0.75))
-        .contentShape(Capsule())
-        .fixedSize()
-    }
-
-    private func ghost(_ title: String, run: @escaping () -> Void) -> some View {
+    /// A quiet action in moss words: "look for it", "set up".
+    private func wordButton(_ title: String, run: @escaping () -> Void) -> some View {
         Button(action: run) {
             Text(title)
                 .font(MuseType.captionMedium)
-                .foregroundStyle(MuseColor.ink70)
-                .padding(.horizontal, 10)
-                .frame(height: 26)
-                .overlay(Capsule().strokeBorder(MuseColor.ink.opacity(0.14), lineWidth: 0.75))
-                .contentShape(Capsule())
+                .foregroundStyle(MuseColor.moss600)
+                .frame(height: PanelMetrics.wordButton)
+                .contentShape(Rectangle())
         }
         .buttonStyle(MusePressStyle())
         .fixedSize()
@@ -218,10 +317,7 @@ struct MenuPanel: View {
         VStack(spacing: 0) {
             row("type into apps") {
                 Toggle("type into apps", isOn: $dictation.typesIntoApps)
-                    .labelsHidden()
-                    .toggleStyle(.switch)
-                    .controlSize(.mini)
-                    .tint(MuseColor.moss)
+                    .toggleStyle(PanelSwitchStyle())
             }
             if dictation.typesIntoApps, !TextInserter.canType {
                 Button("let museo type for you…") { TextInserter.askToType() }
@@ -236,32 +332,35 @@ struct MenuPanel: View {
             if dictation.typesIntoApps {
                 row("voice commands") {
                     Toggle("voice commands", isOn: $commands.isOn)
-                        .labelsHidden()
-                        .toggleStyle(.switch)
-                        .controlSize(.mini)
-                        .tint(MuseColor.moss)
+                        .toggleStyle(PanelSwitchStyle())
                 }
                 if commands.isOn {
+                    row("at a hold's end, too") {
+                        Toggle("commands at a hold's end, too", isOn: $commands.readsEdges)
+                            .toggleStyle(PanelSwitchStyle())
+                    }
+                    .help("say one after a pause, at the end or the start of a hold, and it runs with the words")
                     CommandsSection()
+                        .padding(.top, MuseSpacing.xxs)
                 }
             }
         }
     }
 
     private func row(_ title: String, @ViewBuilder trailing: () -> some View) -> some View {
-        HStack {
+        HStack(spacing: MuseSpacing.sm) {
             Text(title)
                 .font(MuseType.body)
                 .foregroundStyle(MuseColor.ink)
-            Spacer(minLength: MuseSpacing.xs)
+            Spacer(minLength: 0)
             trailing()
         }
-        .frame(height: 36)
+        .frame(height: PanelMetrics.rowHeight)
     }
 
     /// The model, as a real choice. The downloaded one first: one click fetches it, once,
     /// and it's chosen when it lands. Switching applies from the next hold. A right click on
-    /// the pill removes a downloaded model.
+    /// its words removes a downloaded model.
     private var speechPicker: some View {
         Menu {
             Section("on this mac") {
@@ -274,26 +373,17 @@ struct MenuPanel: View {
                 choice(.speech, detail: "no download · long form")
             }
         } label: {
-            HStack(spacing: 5) {
-                Text(pickerLine)
-                    .monospacedDigit()
-                if model.local == nil, let language { Text("· \(language)").foregroundStyle(MuseColor.ink55) }
-                Image(systemName: "chevron.up.chevron.down")
-                    .font(MuseFont.symbol(8))
-                    .foregroundStyle(MuseColor.ink55)
-            }
-            .font(MuseType.caption)
-            .foregroundStyle(MuseColor.ink)
-            .padding(.horizontal, 9)
-            .frame(height: 24)
-            .background(MuseColor.composer.opacity(0.75), in: RoundedRectangle(cornerRadius: 7))
-            .overlay(RoundedRectangle(cornerRadius: 7).strokeBorder(MuseColor.hairline, lineWidth: 0.75))
+            PanelChoiceLabel(
+                value: pickerLine,
+                detail: model.local == nil ? language.map { "· \($0)" } : nil,
+                symbol: "chevron.up.chevron.down"
+            )
         }
         .menuStyle(.button)
         .buttonStyle(.plain)
         .menuIndicator(.hidden)
         .fixedSize()
-        // Freeing the space is rare: a right click on the pill, not a line in its menu.
+        // Freeing the space is rare: a right click on the choice, not a line in its menu.
         .contextMenu {
             ForEach(LocalSpeech.Kind.allCases.filter(local.isReady), id: \.self) { kind in
                 Button("remove \(kind.name) from this mac · \(kind.size)") {
@@ -361,9 +451,8 @@ struct MenuPanel: View {
 
     private var recent: some View {
         let muses = library.recent(2)
-        return VStack(alignment: .leading, spacing: 2) {
+        return VStack(alignment: .leading, spacing: MuseSpacing.xxs) {
             MuseEyebrow("recent")
-                .padding(.top, MuseSpacing.xs)
                 .padding(.bottom, MuseSpacing.xxs)
             if muses.isEmpty {
                 Text("hold the ring and talk.")
@@ -388,73 +477,85 @@ struct MenuPanel: View {
         }
     }
 
+    /// When, how it came in and where it went, in one quiet line; then the words.
     private func recentRow(_ muse: MacMuse) -> some View {
-        VStack(alignment: .leading, spacing: 2) {
-            HStack(spacing: 5) {
-                Text(muse.createdAt.museClock)
+        VStack(alignment: .leading, spacing: MuseSpacing.xxs / 2) {
+            HStack(spacing: MuseSpacing.xxs) {
+                if muse.isFromRing {
+                    // Amber for one from the ring's memory, brighter until it's been seen.
+                    Circle()
+                        .fill(MuseColor.ochre.opacity(muse.isUnseen ? 1 : 0.55))
+                        .frame(width: PanelMetrics.unseenDot, height: PanelMetrics.unseenDot)
+                        .accessibilityHidden(true)
+                }
+                Text([muse.createdAt.museClock, muse.isFromRing ? "from the ring" : "streamed", muse.landing].compactMap { $0 }.joined(separator: " · "))
                     .font(MuseType.caption)
                     .foregroundStyle(MuseColor.ink55)
-                MiniPill(muse.isFromRing ? "from the ring" : "streamed", dot: muse.isFromRing ? (muse.isUnseen ? MuseColor.ochre : MuseColor.ochre.opacity(0.55)) : nil)
-                if let landing = muse.landing { MiniPill(landing) }
+                    .lineLimit(1)
             }
             Text(muse.words ?? "")
-                .font(MuseFont.lora(14.5))
+                .font(MuseFont.lora(PanelMetrics.recentWords))
                 .foregroundStyle(MuseColor.ink)
                 .lineLimit(2)
                 .multilineTextAlignment(.leading)
         }
         .frame(maxWidth: .infinity, alignment: .leading)
-        .padding(.vertical, 6)
+        .padding(.vertical, MuseSpacing.xxs)
         .contentShape(Rectangle())
     }
 
     // MARK: - Foot
 
     private var footer: some View {
-        HStack(spacing: MuseSpacing.sm) {
-            Button {
-                open(nil)
-            } label: {
-                Text("open museo")
+        VStack(spacing: 0) {
+            MuseHairline()
+            HStack(spacing: MuseSpacing.sm) {
+                Button {
+                    open(nil)
+                } label: {
+                    footWord("open museo")
+                }
+                .buttonStyle(.plain)
+                .keyboardShortcut("o")
+                Text("·")
                     .font(MuseType.metaMedium)
-                    .foregroundStyle(MuseColor.moss600)
-                    .frame(height: 28)
-                    .contentShape(Rectangle())
-            }
-            .buttonStyle(.plain)
-            .keyboardShortcut("o")
-            Text("·")
-                .font(MuseType.metaMedium)
-                .foregroundStyle(MuseColor.ink55)
-                .accessibilityHidden(true)
-            // Straight to a blank page, without the library in between.
-            Button {
-                openWindow(id: NoteWindow.id, value: UUID())
-                NSApp.activate()
-            } label: {
-                Text("new note")
-                    .font(MuseType.metaMedium)
-                    .foregroundStyle(MuseColor.moss600)
-                    .frame(height: 28)
-                    .contentShape(Rectangle())
-            }
-            .buttonStyle(.plain)
-            .keyboardShortcut("n")
-            .help("new note · ⌘N")
-            Spacer(minLength: 0)
-            Button {
-                NSApp.terminate(nil)
-            } label: {
-                Image(systemName: "power")
-                    .font(MuseFont.symbol(11))
                     .foregroundStyle(MuseColor.ink55)
-                    .frame(width: 28, height: 28)
-                    .contentShape(Rectangle())
+                    .accessibilityHidden(true)
+                // Straight to a blank page, without the library in between.
+                Button {
+                    openWindow(id: NoteWindow.id, value: UUID())
+                    NSApp.activate()
+                } label: {
+                    footWord("new note")
+                }
+                .buttonStyle(.plain)
+                .keyboardShortcut("n")
+                .help("new note · ⌘N")
+                Spacer(minLength: 0)
+                Button {
+                    NSApp.terminate(nil)
+                } label: {
+                    Image(systemName: "power")
+                        .museSymbol(PanelMetrics.power, weight: .medium)
+                        .foregroundStyle(MuseColor.ink55)
+                        .frame(width: PanelMetrics.rowHeight, height: PanelMetrics.rowHeight, alignment: .trailing)
+                        .contentShape(Rectangle())
+                }
+                .buttonStyle(.plain)
+                .keyboardShortcut("q")
+                .help("quit museo")
+                .accessibilityLabel("quit museo")
             }
-            .buttonStyle(.plain)
-            .keyboardShortcut("q")
-            .accessibilityLabel("quit museo")
+            .frame(height: PanelMetrics.rowHeight + MuseSpacing.xs)
         }
+    }
+
+    private func footWord(_ title: String) -> some View {
+        Text(title)
+            .font(MuseType.metaMedium)
+            .foregroundStyle(MuseColor.moss600)
+            .frame(height: PanelMetrics.rowHeight)
+            .contentShape(Rectangle())
     }
 
     /// Opens the library, on this muse when there is one.
@@ -462,32 +563,5 @@ struct MenuPanel: View {
         if let id { library.selection = id }
         openWindow(id: LibraryWindow.id)
         NSApp.activate()
-    }
-}
-
-/// A small pill beside a recent muse's time: how it came in ("streamed", "from the ring") and
-/// where it went ("into Notes"). The library's words, smaller.
-private struct MiniPill: View {
-    let text: String
-    let dot: Color?
-
-    init(_ text: String, dot: Color? = nil) {
-        self.text = text
-        self.dot = dot
-    }
-
-    var body: some View {
-        HStack(spacing: 4) {
-            if let dot { Circle().fill(dot).frame(width: 4, height: 4) }
-            Text(text)
-                .font(MuseFont.satoshi(10, weight: .medium))
-                .foregroundStyle(MuseColor.ink70)
-                .lineLimit(1)
-        }
-        .padding(.horizontal, 6)
-        .frame(height: 16)
-        .background(MuseColor.raised.opacity(0.6), in: Capsule())
-        .overlay(Capsule().strokeBorder(MuseColor.hairline, lineWidth: 0.75))
-        .fixedSize()
     }
 }

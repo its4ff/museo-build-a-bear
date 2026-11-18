@@ -9,8 +9,8 @@ import Observation
 ///
 /// Only a hold can be a command: you're holding the ring and talking to this mac right now.
 /// Memory recordings land long after they were made, and are never typed or run. A command
-/// is the whole hold, word for word (a hold that only says "next tab"), so it can't fire from
-/// the middle of a sentence. The list lives in
+/// is the whole hold, word for word (a hold that only says "next tab"), or the close or the
+/// opening of one, set apart by a pause (`edge`). It never fires from the middle of a sentence. The list lives in
 /// ~/Library/Application Support/museo mac/commands.json, written on first launch for people
 /// to change: phrases to key presses, apps to open, or shortcuts to run.
 @MainActor
@@ -43,9 +43,21 @@ final class VoiceCommands {
         case typeThenSend(String)
         /// "hey claude, …": the rest goes to that app's chat, sent when it ended with "send".
         case ask(Agent, String, send: Bool)
+        /// Words, a pause, then a command: the words are typed, then it runs.
+        case wordsThenCommand(String, Command, said: String)
+        /// A command, a pause, then words: it runs, then the words are typed.
+        case commandThenWords(Command, said: String, String)
         /// Just words.
         case words(String)
     }
+
+    /// A command may close or open a hold of other words, set apart by a pause.
+    var readsEdges: Bool {
+        didSet { UserDefaults.standard.set(readsEdges, forKey: Self.edgesKey) }
+    }
+    private static let edgesKey = "museo.mac.edgeCommands"
+    /// The longest command looked for at an edge, in words.
+    private nonisolated static let edgeWords = 4
 
     private nonisolated struct File: Codable {
         var about: String
@@ -70,6 +82,7 @@ final class VoiceCommands {
 
     private init() {
         isOn = UserDefaults.standard.object(forKey: Self.onKey) as? Bool ?? true
+        readsEdges = UserDefaults.standard.object(forKey: Self.edgesKey) as? Bool ?? true
     }
 
     // MARK: - Reading a hold
@@ -107,19 +120,76 @@ final class VoiceCommands {
     /// A command counts when either heard one: dictation hears short commands cleanly where a
     /// model can turn "send it" into "Sendet". The words typed are the model's, with its
     /// version of the closing "send" cut off.
-    func read(apple: String, local: String?) -> Reading {
+    func read(apple: String, local: String?, pauses: HoldPauses? = nil) -> Reading {
         guard isOn else { return .words(local ?? apple) }
         for heard in [apple, local].compactMap({ $0 }) where !heard.isEmpty {
             if case .command = read(heard) { return read(heard) }
         }
         if let asked = ask(apple: apple, local: local) { return asked }
-        guard let local, !local.isEmpty else { return read(apple) }
+        guard let local, !local.isEmpty else {
+            let reading = read(apple)
+            if case .words = reading, let edge = edge(typed: apple, heard: [apple], pauses: pauses) { return edge }
+            return reading
+        }
         if let kept = Self.beforeSend(local) { return .typeThenSend(kept) }
         // Dictation heard a closing "send" the model mangled: cut the model's last word too.
         if Self.beforeSend(apple) != nil, let kept = Self.withoutLastWord(local) {
             return .typeThenSend(kept)
         }
+        if let edge = edge(typed: local, heard: [local, apple], pauses: pauses) { return edge }
         return .words(local)
+    }
+
+    /// What the speech model should lean toward hearing, beyond your words: the apps "hey …"
+    /// talks to, and the phrases of commands you added. museo's own commands are left out on
+    /// purpose: they're everyday words ("send", "undo"), and leaning toward them would turn
+    /// "i sent it" into "send it" in ordinary sentences.
+    var vocabulary: [String] {
+        guard isOn else { return [] }
+        refresh()
+        let own = Set(Self.builtIn.flatMap(\.say))
+        return agents.map(\.say) + commands.flatMap(\.say).filter { !own.contains($0) }
+    }
+
+    // MARK: - A command at the edge of a hold
+
+    /// A command that closes or opens a hold of other words: "…that's the plan. new tab",
+    /// "new tab, flights to lisbon". It counts only when the hold's audio shows a pause
+    /// setting it apart, and that stretch is no longer than the command takes to say. "new
+    /// line" closes a hold without one: it only shapes the text, like a closing "send".
+    ///
+    /// `typed` is the reading whose words are typed (the model's); `heard` are the readings
+    /// to look in, since dictation hears short commands cleanly where a model can mangle
+    /// them. Found only in another reading, as many words are cut from `typed`.
+    func edge(typed: String, heard: [String], pauses: HoldPauses?) -> Reading? {
+        guard readsEdges else { return nil }
+        let typedWords = typed.split(whereSeparator: \.isWhitespace).map(String.init)
+        for reading in heard where !reading.isEmpty {
+            let words = reading.split(whereSeparator: \.isWhitespace).map(String.init)
+            guard words.count >= 2 else { continue }
+            // The longest phrase first, so "switch tab" wins over a "tab" of someone's own.
+            for count in stride(from: min(Self.edgeWords, words.count - 1), through: 1, by: -1) where typedWords.count > count {
+                if case .command(let command, let said) = read(words.suffix(count).joined(separator: " ")),
+                   command.keys != "return",
+                   Self.shapesText(command) || HoldPauses.fits(pauses?.trailing, words: count) {
+                    let kept = typedWords.dropLast(count).joined(separator: " ")
+                        .trimmingCharacters(in: CharacterSet(charactersIn: " ,;:\n"))
+                    if !Self.plain(kept).isEmpty { return .wordsThenCommand(kept, command, said: said) }
+                }
+                if case .command(let command, let said) = read(words.prefix(count).joined(separator: " ")),
+                   command.keys != "return", !Self.shapesText(command),
+                   HoldPauses.fits(pauses?.leading, words: count),
+                   let rest = Self.dropping(count, from: typed) {
+                    return .commandThenWords(command, said: said, rest)
+                }
+            }
+        }
+        return nil
+    }
+
+    /// Only moves the caret down the page: safe to run at the close of a hold with no pause.
+    private nonisolated static func shapesText(_ command: Command) -> Bool {
+        command.keys == "shift+return"
     }
 
     /// "hey claude, …" from either reading: the model's words after the greeting when it

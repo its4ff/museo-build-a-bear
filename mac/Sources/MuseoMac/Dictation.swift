@@ -138,6 +138,15 @@ final class Dictation {
         }
     }
 
+    /// Ways to ask for a new note, lowercase, without punctuation.
+    private static let newNoteSay = ["new note", "a new note", "open a new note", "start a new note", "new museo note"]
+
+    /// True when either reading of the hold (dictation's, or the downloaded model's) is
+    /// only that.
+    private static func asksForNewNote(apple: String, local: String?) -> Bool {
+        [apple, local].compactMap { $0 }.contains { newNoteSay.contains(VoiceCommands.plain($0)) }
+    }
+
     private func finish(_ speech: HoldSpeech?, _ hold: Int) {
         let audio = heard
         let started = holdStarted
@@ -155,6 +164,17 @@ final class Dictation {
                 return
             }
             lastWords = words
+            // museo in front (the library, or a note) and the hold only says "new note": a
+            // new note opens. museo's own, like a note's shortcuts: always on, whatever the
+            // switches say, and not in commands.json.
+            if NSApp.isActive, Self.asksForNewNote(apple: apple, local: local) {
+                lastTyped = false
+                LibraryOpener.newNote()
+                MacLibrary.shared.forgetCommandHold(startedAt: started)
+                MenuIsland.shared.finish(note: "new note")
+                print("[museo][note] hold \(hold): a new note")
+                return
+            }
             // A museo note in front: the words go straight in at its caret, whatever the
             // switch says. A hold that only says one of the note's shortcuts does that instead.
             if let note = NoteFocus.active {
@@ -189,7 +209,26 @@ final class Dictation {
                 land(.copied, hold, words)
                 return
             }
-            switch VoiceCommands.shared.read(apple: apple, local: local) {
+            // Where the hold went quiet, for a command at its edge. Counted off the main actor.
+            let pauses = await Task.detached { HoldPauses(samples: audio) }.value
+            switch VoiceCommands.shared.read(apple: apple, local: local, pauses: pauses) {
+            case .wordsThenCommand(let kept, let command, let said):
+                let landing = TextInserter.insert(kept + " ")
+                if landing != .copied {
+                    // Let the paste land before the keys go after it.
+                    try? await Task.sleep(for: .milliseconds(250))
+                    if VoiceCommands.shared.run(command) { CommandTally.shared.add(command.say.first ?? said) }
+                }
+                land(landing, hold, kept, then: said)
+                print("[museo][command] hold \(hold): words, then \"\(said)\"")
+            case .commandThenWords(let command, let said, let rest):
+                if VoiceCommands.shared.run(command) {
+                    CommandTally.shared.add(command.say.first ?? said)
+                    // A new tab or another app takes a moment to be ready for typing.
+                    try? await Task.sleep(for: .milliseconds(450))
+                }
+                land(TextInserter.insert(rest + " "), hold, rest, then: said)
+                print("[museo][command] hold \(hold): \"\(said)\", then words")
             case .command(let command, let said):
                 let ran = VoiceCommands.shared.run(command)
                 lastTyped = false
@@ -232,7 +271,7 @@ final class Dictation {
     }
 
     /// Says where a hold's words went.
-    private func land(_ landing: TextInserter.Landing, _ hold: Int, _ words: String, sent: Bool = false) {
+    private func land(_ landing: TextInserter.Landing, _ hold: Int, _ words: String, sent: Bool = false, then command: String? = nil) {
         switch landing {
         case .typed(let app):
             lastTyped = true
@@ -240,7 +279,9 @@ final class Dictation {
             MacLibrary.shared.noteTyped(into: app, sent: sent)
             // The app only when the focused field told us; never a guess.
             let done = sent ? "sent" : "typed"
-            MenuIsland.shared.finish(note: app.map { "\(done) into \($0)" } ?? done)
+            let landed = app.map { "\(done) into \($0)" } ?? done
+            // A command that ran at the hold's edge says so too: "typed into Notes · new tab".
+            MenuIsland.shared.finish(note: command.map { "\(landed) · \($0)" } ?? landed)
         case .copied:
             lastTyped = false
             MenuIsland.shared.finish(note: "copied · ⌘V to paste")

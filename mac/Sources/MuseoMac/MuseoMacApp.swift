@@ -31,6 +31,15 @@ struct MuseoMacApp: App {
         .windowStyle(.hiddenTitleBar)
         .commands { NoteCommands() }
 
+        // The first run: four pages, once.
+        Window("welcome", id: WelcomeWindow.id) {
+            WelcomeWindow()
+        }
+        .windowStyle(.hiddenTitleBar)
+        .windowResizability(.contentSize)
+        .restorationBehavior(.disabled)
+        .defaultLaunchBehavior(.suppressed)
+
         // A museo note, the library's size. Opened by the plus, ⌘N, or a note in the library.
         WindowGroup("note", id: NoteWindow.id, for: UUID.self) { $id in
             NoteWindow(id: id)
@@ -71,6 +80,14 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             ScreenSheet.write(to: URL(fileURLWithPath: folder))
             exit(0)
         }
+        if UserDefaults.standard.bool(forKey: "edgeCheck") {
+            EdgeCheck.run()
+            exit(0)
+        }
+        if let folder = UserDefaults.standard.string(forKey: "renderDuo") {
+            DuoShots.write(to: URL(fileURLWithPath: folder), only: UserDefaults.standard.string(forKey: "duoOnly"))
+            exit(0)
+        }
         #endif
         // Once, before anything reads the ring. Newest recordings come over first, so a
         // fresh one can land where you are while older ones follow. And only recordings
@@ -101,7 +118,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         RingActions.live(openFirmware: {}).setAutoSync(false)
         // Opened from the dock or Finder: the library, like any app. From login items, or
         // relaunched by scripts/mac.sh (-quietLaunch): just the menu bar.
-        if !LibraryOpener.launchedAtLogin, !UserDefaults.standard.bool(forKey: "quietLaunch") {
+        // The very first time on this mac: the first run, however museo was opened.
+        if !WelcomeWindow.isDone {
+            LibraryOpener.welcome()
+        } else if !LibraryOpener.launchedAtLogin, !UserDefaults.standard.bool(forKey: "quietLaunch") {
             LibraryOpener.open()
         }
     }
