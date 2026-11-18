@@ -1,0 +1,3 @@
+the icon's light is white now, the color of streaming.
+the disk image opens to its own window.
+a command's outline keeps to its own column.
