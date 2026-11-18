@@ -146,7 +146,23 @@ final class MacLibrary {
         Museo.takeWaitingCaptures()
         // Catch up words for anything saved before they were heard, or heard as nothing
         // (cheap: a blank one is a few seconds of audio).
-        for muse in muses where muse.hasAudio && (muse.words ?? "").isEmpty { transcribe(muse.id) }
+        catchUpWords()
+    }
+
+    /// Hears every muse still waiting for its words, one at a time. All at once, a few
+    /// hundred never come back.
+    private func catchUpWords() {
+        let waiting = muses.filter { $0.hasAudio && ($0.words ?? "").isEmpty }.map(\.id)
+        guard !waiting.isEmpty else { return }
+        Task {
+            for id in waiting {
+                guard let muse = muses.first(where: { $0.id == id }), (muse.words ?? "").isEmpty else { continue }
+                let words = await MacSpeech.transcribe(audioFolder.appendingPathComponent(muse.audioFile))
+                guard let index = muses.firstIndex(where: { $0.id == id }) else { continue }
+                muses[index].words = words ?? ""
+                try? flush()
+            }
+        }
     }
 
     #if DEBUG
