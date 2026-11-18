@@ -25,6 +25,7 @@ enum DuoShots {
         if UserDefaults.standard.string(forKey: "libraryShot") != nil { return LibraryShots.all }
         if UserDefaults.standard.bool(forKey: "postShot") { return PostShots.all }
         if UserDefaults.standard.string(forKey: "duoOnly") == "welcome" { return WelcomeShots.all }
+        if UserDefaults.standard.string(forKey: "duoOnly") == "dmg" { return DmgShots.all }
         return KitShots.all + RoomShots.all + ShelfShots.all + PageShots.all + SmallShots.all + LibraryShots.all + PanelShots.all + WelcomeShots.all
     }
 

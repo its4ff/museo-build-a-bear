@@ -64,7 +64,48 @@ mkdir "$STAGE/museo"
 ditto "$APP" "$STAGE/museo/museo.app"
 ln -s /Applications "$STAGE/museo/Applications"
 rm -f "$DMG"
-hdiutil create -volname "museo" -srcfolder "$STAGE/museo" -format UDZO -ov "$DMG" >/dev/null
+# Its window: museo and Applications side by side on moss, an arrow between them, no toolbar.
+# Finder keeps a window's look in the volume itself, so the dmg is made writable, opened in
+# Finder to be arranged, then pressed into the read-only one that ships. Finder asks once
+# for leave to be arranged this way; without it the dmg still works, with a plain window.
+mkdir "$STAGE/museo/.background"
+cp "$MAC/Resources-dmg/background.tiff" "$STAGE/museo/.background/"
+hdiutil create -volname "museo" -srcfolder "$STAGE/museo" -format UDRW -ov "$STAGE/rw.dmg" >/dev/null
+# Finder tells disks apart by name, so no other "museo" may be mounted while this one is
+# arranged: any that are (an earlier dmg left open) are ejected first.
+for other in /Volumes/museo /Volumes/museo\ [0-9]*; do
+  [ -d "$other" ] && hdiutil detach "$other" >/dev/null 2>&1 || true
+done
+MOUNT="$(hdiutil attach "$STAGE/rw.dmg" -readwrite -noverify -noautoopen | awk -F'\t' '/\/Volumes\// {print $NF; exit}')"
+if ! osascript <<APPLESCRIPT >/dev/null
+tell application "Finder"
+  tell disk "museo"
+    open
+    set current view of container window to icon view
+    set toolbar visible of container window to false
+    set statusbar visible of container window to false
+    set bounds of container window to {200, 120, 860, 548}
+    set theOptions to icon view options of container window
+    set arrangement of theOptions to not arranged
+    set icon size of theOptions to 112
+    set text size of theOptions to 12
+    set background picture of theOptions to file ".background:background.tiff"
+    set position of item "museo.app" of container window to {190, 170}
+    set position of item "Applications" of container window to {470, 170}
+    close
+    open
+    update without registering applications
+    delay 2
+    close
+  end tell
+end tell
+APPLESCRIPT
+then
+  echo "couldn't arrange the dmg's window (see Finder's words above): it ships with a plain one"
+fi
+sync
+hdiutil detach "$MOUNT" >/dev/null 2>&1 || hdiutil detach "$MOUNT" -force >/dev/null
+hdiutil convert "$STAGE/rw.dmg" -format UDZO -o "$DMG" >/dev/null
 
 if [ "${1:-}" != "unsigned" ]; then
   codesign --force --timestamp --sign "$IDENTITY" "$DMG"
