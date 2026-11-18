@@ -36,7 +36,7 @@ enum LabRegistry {
     /// home), `LabRegistry+MusePage.swift`, `LabRegistry+Onboarding.swift`; ring, build and
     /// the design kit are below.
     static var all: [LabScreen] {
-        library + musePage + onboarding + ring + build + pages
+        library + musePage + onboarding + ring + build + pages + pocket
     }
 
     static func screen(_ id: String) -> LabScreen? {
