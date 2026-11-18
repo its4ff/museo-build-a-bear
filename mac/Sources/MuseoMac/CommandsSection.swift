@@ -190,11 +190,16 @@ struct CommandsSection: View {
         .padding(.horizontal, MuseSpacing.xxs)
         .background {
             let shape = RoundedRectangle(cornerRadius: PanelMetrics.hoverRadius, style: .continuous)
-            if isEditing {
-                shape.strokeBorder(MuseColor.moss600.opacity(0.7), lineWidth: 1)
-            } else if isHovered {
-                shape.fill(DuoColor.hover)
+            // Stops short of the cell's right edge: the columns touch, and a line drawn to
+            // the edge (and the little it reaches past it) ran over the next command's key.
+            Group {
+                if isEditing {
+                    shape.strokeBorder(MuseColor.moss600.opacity(0.7), lineWidth: 1)
+                } else if isHovered {
+                    shape.fill(DuoColor.hover)
+                }
             }
+            .padding(.trailing, MuseSpacing.sm)
         }
         .padding(.horizontal, -MuseSpacing.xxs)
         .contentShape(Rectangle())
