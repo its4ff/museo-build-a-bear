@@ -102,6 +102,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         // fresh one can land where you are while older ones follow. And only recordings
         // made after this mac first saw the ring: the ones before are the iphone's, and
         // stay on the ring (the panel's ring menu brings them in when asked).
+        OneMuseo.takeOver()
         let ring = Museo.start(name: "museo")
         ring.syncsNewestFirst = true
         ring.bringsInOnlyNewRecordings = true

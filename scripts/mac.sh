@@ -1,5 +1,5 @@
 #!/bin/bash
-# museo for mac: build the menu bar app into mac/build/museo.app, then open it.
+# museo for mac: build the menu bar app into mac/build/museo dev.app, then open it.
 #
 #   scripts/mac.sh          build and open
 #   scripts/mac.sh build    build only
@@ -12,7 +12,11 @@ set -euo pipefail
 
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 MAC="$ROOT/mac"
-APP="$MAC/build/museo.app"
+# A build made here is "museo dev", so it is never mistaken for the released museo beside it
+# (scripts/mac-dmg.sh sets MUSEO_RELEASE and gets the real name).
+NAME="museo dev"
+[ -n "${MUSEO_RELEASE:-}" ] && NAME="museo"
+APP="$MAC/build/$NAME.app"
 # Not next to the app: the repo may sit in a folder macOS guards (Downloads, Documents), and
 # then the app can't open its own log and won't launch.
 LOG="$HOME/Library/Logs/museo-mac.log"
@@ -25,7 +29,8 @@ swift build -c release --package-path "$MAC" 2>&1 | grep -E "error|warning: .*/m
 BIN="$(swift build -c release --package-path "$MAC" --show-bin-path)"
 [ -x "$BIN/MuseoMac" ] || { echo "build failed"; exit 1; }
 
-rm -rf "$APP"
+# One copy in the build folder: the other name's app would be a stale museo to open by mistake.
+rm -rf "$MAC/build/museo.app" "$MAC/build/museo dev.app"
 mkdir -p "$APP/Contents/MacOS" "$APP/Contents/Resources"
 cp "$BIN/MuseoMac" "$APP/Contents/MacOS/museo"
 cp "$MAC/Info.plist" "$APP/Contents/Info.plist"
@@ -42,6 +47,7 @@ fi
 # here drops the feed, so it is never swapped for the public one.
 if [ -z "${MUSEO_RELEASE:-}" ]; then
   /usr/libexec/PlistBuddy -c "Delete :SUFeedURL" "$APP/Contents/Info.plist" 2>/dev/null || true
+  /usr/libexec/PlistBuddy -c "Set :CFBundleName $NAME" -c "Set :CFBundleDisplayName $NAME" "$APP/Contents/Info.plist"
 fi
 # Lora and Satoshi, from the iphone app's design folder (one copy of the fonts in the repo).
 cp "$ROOT/museo build/Design/Fonts/"*.ttf "$APP/Contents/Resources/"
@@ -52,7 +58,7 @@ IDENTITY="$(security find-identity -v -p codesigning 2>/dev/null | awk -F'"' '/A
 codesign --force --deep --sign "${IDENTITY:--}" "$APP" >/dev/null 2>&1
 # A rebuilt bundle at the same path: tell LaunchServices it changed.
 /System/Library/Frameworks/CoreServices.framework/Frameworks/LaunchServices.framework/Support/lsregister -f "$APP"
-echo "built mac/build/museo.app · signed ${IDENTITY:-ad hoc}"
+echo "built mac/build/$NAME.app · signed ${IDENTITY:-ad hoc}"
 
 if [ "${1:-}" != "build" ]; then
   pkill -x museo 2>/dev/null && sleep 1 || true
