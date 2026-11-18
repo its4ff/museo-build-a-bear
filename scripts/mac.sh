@@ -32,6 +32,17 @@ cp "$MAC/Info.plist" "$APP/Contents/Info.plist"
 for bundle in "$BIN"/*.bundle; do
   [ -e "$bundle" ] && cp -R "$bundle" "$APP/Contents/Resources/"
 done
+# Sparkle (updates) rides inside the app, and the app is told where to find it.
+if [ -d "$BIN/Sparkle.framework" ]; then
+  mkdir -p "$APP/Contents/Frameworks"
+  cp -R "$BIN/Sparkle.framework" "$APP/Contents/Frameworks/"
+  install_name_tool -add_rpath "@executable_path/../Frameworks" "$APP/Contents/MacOS/museo" 2>/dev/null || true
+fi
+# Only a released build updates itself (scripts/mac-dmg.sh sets MUSEO_RELEASE): a build made
+# here drops the feed, so it is never swapped for the public one.
+if [ -z "${MUSEO_RELEASE:-}" ]; then
+  /usr/libexec/PlistBuddy -c "Delete :SUFeedURL" "$APP/Contents/Info.plist" 2>/dev/null || true
+fi
 # Lora and Satoshi, from the iphone app's design folder (one copy of the fonts in the repo).
 cp "$ROOT/museo build/Design/Fonts/"*.ttf "$APP/Contents/Resources/"
 # The dot ring for the panel (bone dots, from the 4ff site's museo iconography).

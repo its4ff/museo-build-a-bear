@@ -64,6 +64,25 @@ struct LibrarySettingsPopover: View {
             }
             .opacity(library.leavesOutShort ? 1 : 0.45)
             .disabled(!library.leavesOutShort)
+            if Updates.isOn {
+                HStack {
+                    Text("museo \(Updates.version)")
+                        .font(MuseType.caption)
+                        .foregroundStyle(MuseColor.ink55)
+                    Spacer(minLength: 0)
+                    Button {
+                        Updates.check()
+                    } label: {
+                        Text("check for updates")
+                            .font(MuseType.captionMedium)
+                            .foregroundStyle(MuseColor.moss600)
+                            .contentShape(Rectangle())
+                    }
+                    .buttonStyle(.plain)
+                }
+                .padding(.top, MuseSpacing.xs)
+                .overlay(alignment: .top) { Rectangle().fill(MuseColor.hairline).frame(height: 1) }
+            }
         }
         .padding(MuseSpacing.md)
         .frame(width: 290, alignment: .leading)

@@ -101,6 +101,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         RingWatch.shared.start()
         NotchIsland.shared.start()
         HotKeys.start()
+        Updates.start()
         Task { await MacSpeech.prepare() }
         // Each hold's pill starts and ends at rest.
         Museo.onEvent { event in

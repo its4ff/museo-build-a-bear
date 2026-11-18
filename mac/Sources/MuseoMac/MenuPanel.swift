@@ -179,6 +179,9 @@ struct MenuPanel: View {
         .contextMenu {
             ringMenu
             Divider()
+            if Updates.isOn {
+                Button("check for updates") { Updates.check() }
+            }
             Button("quit museo") { NSApp.terminate(nil) }
         }
     }

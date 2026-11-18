@@ -15,13 +15,19 @@
 	<key>CFBundlePackageType</key>
 	<string>APPL</string>
 	<key>CFBundleShortVersionString</key>
-	<string>0.1</string>
+	<string>0.2</string>
 	<key>CFBundleVersion</key>
-	<string>1</string>
+	<string>2</string>
 	<key>LSMinimumSystemVersion</key>
 	<string>26.0</string>
 	<key>LSUIElement</key>
 	<true/>
+	<key>SUEnableAutomaticChecks</key>
+	<true/>
+	<key>SUFeedURL</key>
+	<string>https://4ff.com/museo/mac/appcast.xml</string>
+	<key>SUPublicEDKey</key>
+	<string>IKguIzKgCHnEtEWSq0bZRHM/rSrtO5gBeNrQUIwlRBg=</string>
 	<key>NSBluetoothAlwaysUsageDescription</key>
 	<string>museo uses bluetooth to link your ring.</string>
 	<key>NSDocumentsFolderUsageDescription</key>
