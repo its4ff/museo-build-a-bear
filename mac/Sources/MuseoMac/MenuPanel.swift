@@ -33,6 +33,14 @@ struct MenuPanel: View {
         VStack(alignment: .leading, spacing: 0) {
             ringLine
                 .padding(.bottom, MuseSpacing.sm)
+            if let offer = UpdateModel.shared.offer {
+                PanelUpdateRow(offer: offer) {
+                    if offer.stage == .ready { Updates.restart() } else { Updates.install() }
+                } more: {
+                    LibraryOpener.update()
+                }
+                .padding(.bottom, MuseSpacing.xs)
+            }
             controls
             recent
                 .padding(.top, MuseSpacing.lg)

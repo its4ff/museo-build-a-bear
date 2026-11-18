@@ -8,6 +8,29 @@ import SwiftUI
 enum PanelShots {
     static var all: [DuoShot] {
         prepare()
+        // A newer museo, three ways: `-panelUpdate offered`, `coming`, `ready` or `card`.
+        if let stage = UserDefaults.standard.string(forKey: "panelUpdate") {
+            var offer = UpdateOffer(
+                version: "0.3",
+                notes: ["commands at the end of a hold, after a pause.", "a calmer dune in the library.", "minimize now works from a full screen note."],
+                size: "8.7 mb"
+            )
+            if stage == "card" {
+                return [DuoShot("update-card", size: CGSize(width: UpdateMetrics.card.width + desk * 2, height: UpdateMetrics.card.height + desk * 2)) {
+                    ZStack {
+                        MuseColor.groundDeep.mix(with: MuseColor.ink, by: 0.14)
+                        UpdateCard(offer: offer)
+                            .clipShape(RoundedRectangle(cornerRadius: MuseRadius.card, style: .continuous))
+                            .museElevation(.e2)
+                    }
+                }]
+            }
+            offer.stage = stage == "coming" ? .comingDown(0.62) : (stage == "ready" ? .ready : .offered)
+            UpdateModel.shared.offer = offer
+            return [DuoShot("update-panel-\(stage)", size: CGSize(width: PanelMetrics.width + desk * 2, height: 760)) {
+                onDesk { MenuPanel() }
+            }]
+        }
         // The ring line's two plainer ways, for choosing: `-panelRing line` or `quietLine`.
         if let style = UserDefaults.standard.string(forKey: "panelRing") {
             MenuPanel.ringLineStyle = style == "line" ? .line : .quietLine

@@ -40,6 +40,15 @@ struct MuseoMacApp: App {
         .restorationBehavior(.disabled)
         .defaultLaunchBehavior(.suppressed)
 
+        // A newer museo, and what changed in it.
+        Window("update", id: UpdateWindow.id) {
+            UpdateWindow()
+        }
+        .windowStyle(.hiddenTitleBar)
+        .windowResizability(.contentSize)
+        .restorationBehavior(.disabled)
+        .defaultLaunchBehavior(.suppressed)
+
         // A museo note, the library's size. Opened by the plus, ⌘N, or a note in the library.
         WindowGroup("note", id: NoteWindow.id, for: UUID.self) { $id in
             NoteWindow(id: id)

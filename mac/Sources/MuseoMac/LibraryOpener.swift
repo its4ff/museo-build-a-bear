@@ -23,6 +23,13 @@ enum LibraryOpener {
         NSApp.activate()
     }
 
+    /// The sheet that says what changed in a newer museo.
+    static func update() {
+        guard let openWindow else { return }
+        openWindow(id: UpdateWindow.id)
+        NSApp.activate()
+    }
+
     static func take(_ action: OpenWindowAction) {
         openWindow = action
         if waitingToWelcome {

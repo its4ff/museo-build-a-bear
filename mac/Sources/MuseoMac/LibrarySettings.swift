@@ -73,7 +73,7 @@ struct LibrarySettingsPopover: View {
                     Button {
                         Updates.check()
                     } label: {
-                        Text("check for updates")
+                        Text(UpdateModel.shared.isChecking ? "looking…" : (UpdateModel.shared.note ?? "check for updates"))
                             .font(MuseType.captionMedium)
                             .foregroundStyle(MuseColor.moss600)
                             .contentShape(Rectangle())

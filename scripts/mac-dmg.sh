@@ -85,6 +85,10 @@ if [ "${1:-}" != "unsigned" ]; then
   TOOLS="$MAC/.build/artifacts/sparkle/Sparkle/bin"
   mkdir -p "$RELEASE"
   cp "$DMG" "$RELEASE/"
-  "$TOOLS/generate_appcast" --account museo --download-url-prefix "$FEED" -o "$RELEASE/appcast.xml" "$RELEASE"
+  # What changed, a few short lines in museo's voice: mac/release-notes/<version>.txt. museo
+  # shows them in its own sheet, so they ride inside the appcast.
+  NOTES="$MAC/release-notes/$VERSION.txt"
+  [ -f "$NOTES" ] && cp "$NOTES" "$RELEASE/museo-$VERSION.txt"
+  "$TOOLS/generate_appcast" --account museo --embed-release-notes --download-url-prefix "$FEED" -o "$RELEASE/appcast.xml" "$RELEASE"
   echo "wrote ${RELEASE#$ROOT/}/appcast.xml · upload it and $(basename "$DMG") to $FEED"
 fi
